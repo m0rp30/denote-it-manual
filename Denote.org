@@ -1,0 +1,1425 @@
+#+TITLE: denote: Note semplici con uno schema di nomi-file efficente
+#+AUTHOR: Protesilaos Stavrou
+#+email: info@protesilaos.com
+#+LANGUAGE: it
+#+options: ':t toc:nil author:t email:t num:t
+#+startup: content
+#+macro: stable-version 3.0.0
+#+macro: release-date 2024-06-30
+#+macro: development-version 3.1.0-dev
+#+export_file_name: denote.texi
+#+texinfo_filename: denote.info
+#+texinfo_dir_category: Emacs misc features
+#+texinfo_dir_title: Denote: (denote)
+#+texinfo_dir_desc: Note semplici con uno schema di nomi-file efficente
+#+texinfo_header: @set MAINTAINERSITE @uref{https://protesilaos.com,maintainer webpage}
+#+texinfo_header: @set MAINTAINER Protesilaos Stavrou
+#+texinfo_header: @set MAINTAINEREMAIL @email{info@protesilaos.com}
+#+texinfo_header: @set MAINTAINERCONTACT @uref{mailto:info@protesilaos.com,contact the maintainer}
+
+#+texinfo: @insertcopying
+
+Questo manuale, scritto da Protesilaos Stravou, descrive le opzioni di
+personalizzazione per il pacchetto Emacs chiamato =denote= (o =denote.el=), e
+fornisce ogni altro pezzo di informazione pertinente ad esso.
+
+La documentazione fornitavi corrisponde alla versione stabile {{{stable-version}}},
+rilasciata nel {{{release-date}}}. Ogni riferimento ad una nuova funzionalità più
+recente che non fa ancora parte dell'ultimo commit, é esplicitamente
+marcato come tale.
+
+La versione di sviluppo corrente é {{{development-version}}}.
+
++ Nome pacchetto (GNU ELPA): ~denote~
++ Manuale ufficiale: [[<https://protesilaos.com/emacs/denote>]]
++ Lista cambiamenti: [[<https://protesilaos.com/emacs/denote-changelog>]]
++ Repositori git
+  + GitHub: [[<https://github.com/protesilaos/denote>]]
+  + GitLab: [[<https://gitlab.com/protesilaos/denote>]]
++ Video esempio: [[<https://protesilaos.com/codelog/2022-06-18-denote-demo/>]]
++ Backronyms: Denote Everything Neatly; Omit The Excesses. Don’t Ever Note
+  Only The Epiphenomenal.
+
+Se hai visto la varsione README.org di questo file, si noti che il
+meccanismo GNU ELPA genera automaticamente un manuale informativo.
+
+#+toc: headlines 8 insert TOC here, with eight headline levels
+
+* Copying
+:PROPERTIES:
+:copying:  t
+:END:
+
+Copyright (C) 2022-2024 Free Software Foundation, Inc.
+
+#+begin_quote
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant
+Sections, with the Front-Cover Texts being “A GNU Manual,” and with the
+Back-Cover Texts as in (a) below. A copy of the license is included in the
+section entitled “GNU Free Documentation License.”
+
+(a) The FSF’s Back-Cover Text is: “You have the freedom to copy and modify
+this GNU manual.”
+#+end_quote
+
+* Panoramica
+:PROPERTIES:
+:CUSTOM_ID: h:a09b70a2-ae0b-4855-ac14-1dddfc8e3241
+:END:
+
+Gli obbiettivi di Denote é di essere semplice nell'uso, concentrato nel suo
+scopo, ed un efficace strumento, per Emacs, per la raccolta di note e
+denominazione dei file.
+
+Denote é basato sull'idea che i file debbano seguire uno schema di
+denominazione dei file prevedibile e desscrittivo. Il nome di file deve
+offrire una chiara indicazione di quello che é il contesto, senza il
+riferimento di ogni altro metadato. Denote fondamentalmente semplifica la
+creazione di tali file o il nome di file fornendo, al contempo, funzionalità per
+collegarli tra loro (dove tali file sono modificabili).
+
+Lo schema di denominazione dei file, di Denote, non é limitato alle
+"note". Può anche essere usato con tutti i tipi di file, inclusi quei file
+che non sono editabili in Emacs, come per i video. La denominazione dei
+file in un modo consistente ne facilita notevolmente il filtraggio ed il
+recupero. Denote fornisce gli strumenti necessari per rinominare i file,
+indipendentemente dal tipo di file.
+
+Denote é basato sui seguenti principi fondamentali di progettazione:
+
++ Prevedibilità :: I nomi dei file devono seguire una convenzione consistente e descrittiva
+  ([[#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][Lo schema di file-name]]). Il nome del file da solo
+  dovrebbe fornire una chiara indicazione di quello che sono i contenuti,
+  senza nessun'altro metadato. Questa convenzione non é specifica solo per
+  prendere le note, ma é pertinente a qualsiasi forma di file che faccia
+  parte della memoria a lungo termine dell'utente([[[#h:532e8e2a-9b7d-41c0-8f4b-3c5cbb7d4dca][Punto di ingresso]]).
+
++ Componibilità :: Sii un buon cittadino di Emacs, integrandoti con
+  altri pacchetti o funzionalità built-in invece di reinventare
+  funzionalità come quelle per il filtraggio o il grepping. L'autore di
+  Denote (Protesilaos, aka "Prot") scrive note ordinarie in testo semplice
+  (=.txt=), cambiando sa richiesta a un file Org solo quando il suo insieme
+  di funzionalità estese é richiesto per l'attività in corso ([[#h:17896c8c-d97a-4faa-abf6-31df99746ca6][Punto d'ingresso]]).
+  
++ Portabilità :: Le note sono in testo semplice e dovrebbero rimanere portabili. La
+  modalità in cui Denote scrive i nomi dei file, compreso il frontespizzio
+  che é incluso nell'intestazione della nota, ed i link che stabilisce
+  devono essere tutti adeguatamente utilizzabili con gli strumenti standard
+  di Unix. Non necessita di database o altro software specializzato. Man
+  mano che Denote si sviluppato e questo manuale viene completat, verranno
+  forniti esempi concreti su come eseguire l'equivalente di Denote sulla
+  riga di comando.
+
++ Flessiblità :: Non assume le preferenze dell'utente per la metodologia di raccolta delle
+  note. Denote é concettualmente simile al metodo Zettelkasten, che puoi
+  imparare molto più in questa dettagliata introduzione:
+  <https://zettelkasten.de/introduction/>. Le note sono atomiche (una per
+  file) ed hanno un indentificatore univoco. Comunque, Denote non obbliga
+  ad una particolare metodologia per gestire la conoscenza, come un
+  ristretto vocabolario o un mutuale esclusivo insieme di parole
+  chiave. Denote non controlla neanche se l'utente scrive note
+  tematicamente atomiche. Si trova sopra all'untente per applicare il
+  rigore richiesto e/o la creatività Spetta all'utente applicare il rigore
+  e/o la creatività necessari per ottenere il flusso di lavoro
+  preferito. ([[[#h:6060a7e6-f179-4d42-a9de-a9968aaebecc][Scrivere metanote]]).
+
++ Hackability :: Il codice base di Denote consiste in un insieme di piccole e riusabili
+  funzioni. Tutte loro hanno la stringa di documentazione. L'idea é quella
+  di rendere per utenti con varii livelli di competenza capire cosa sta
+  succedend e di poter intervenire chirurgicamente dove necessario
+  (e.s. per modificare alcune formattazioni).
+  In questo manuale, forniamo esempi concreti di tali configurazioni a
+  livello utente ([[#h:4a6d92dd-19eb-4fcc-a7b5-05ce04da3a92][Tenere un diario o un'agenda]]).
+
+Adesso la parte importante ... "Denote" é la parola famigliare, anche se é
+un gioco di parole sul concetto di "nota". Inoltre, possiamo inventarci
+acronimi, ricorsivi o meno, di utilità sempre più dubbia come:
+
++ Don't Ever Note Only The Epiphenomenal (Non notare mai solo l'epifenomeno)
++ Denote Everything Neatly; Omit The Excesses ( Denote tutto ordinatamente,
+  Ometti gli eccessi)
+
+Ma vi lasciamo tornare al lavoro. Non evitare o trascurare i tuoi obblighi, compiti
+ed impegni (Don’t Eschew or Neglect your Obligations, Tasks, and Engagements).
+
+* Punto d'ingresso
+:PROPERTIES:
+:CUSTOM_ID: h:17896c8c-d97a-4faa-abf6-31df99746ca6
+:END:
+
+#+findex: denote
+#+findex: denote-type
+#+findex: denote-org-capture
+#+findex: denote-date
+#+findex: denote-subdirectory
+#+findex: denote-template
+#+findex: denote-signature
+
+Ci sono cinque modi di scrivere una nota con Denote: invocando il comando
+~denote~, ~denote-type~, ~denote-date~, ~denote-subdirectory, ~denote-template,
+~denote-signature~, o sfruttare ~org-capture-templates~ impostando un
+template che richiama la funzione ~denote-org-capture~.
+Spiegheremo tutto questo nelle sezioni successive. Esistono anche altri
+comandi più specializzati, che si apprenderanno leggendo questo manuale.
+
+Tutti questi comandi costruiscono il nome del file in accordo con le
+opzioni utente ~denote-file-name-components-order~ ([[#h:dc8c40e0-233a-4991-9ad3-2cf5f05ef1cd][Cambia l'ordine del nome
+file dei componenti]]).
+
+** Creazione note standard
+:PROPERTIES:
+:CUSTOM_ID: h:6a92a8b5-d766-42cc-8e5b-8dc255466a23
+:END:
+
+Il comando ~denote~ richiede un titolo. Se una regione é attivo, il testo
+della regione diventa il default richiesto dal minibuffer (significa che
+premendo =RET= senza inserire nulla usa il valore di default). Quando il
+titolo é stato fornito, il comando ~denote~ richiederà delle parole
+chiave. La nota risultante avrà il nome file come già spiegato: [[#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][Lo schema
+di file-name]].
+
+Il comando ~denote~ avvia l'hook ~denote-after-new-note-hook~ dopo aver creato
+la nuova nota.
+
+Il tipo di file della nuova nota é determinato dall'opzione utente
+~denote-file-type~ ([[#h:13218826-56a5-482a-9b91-5b6de4f14261][Frontespizio]]).
+
+La richiesta di parole chiave nel minibuffer supportano il completamento. I
+candidati disponibili sono anchessi definiti dall'opzione utente
+~denote-known-keywords~. Altri candidati possono essere presi dai nomi delle
+note esistenti, impostando ~denote-infer-keyword~ a non-nil (che é il caso di
+default).
+
+Può essere inserita più di una chiave separate da virgola (o qualunque sia
+il valode du ~crm-separator~--che dovrebbe essere una virgola). Quando
+l'opzione utente ~denote-sort-keywords~ é non-nil (il default), le parole
+chiave vengono ordinate alfabeticamente (tecnicamente, l'ordinamenteo é
+fatto con ~string-lessp~).
+
+Il comportamento interattivo del comando ~denote~ é influenzato dall'opzione
+utente ~denote-prompts~ ([[#h:f9204f1f-fcee-49b1-8081-16a08a338099][L'opzione denote-prompts]]).
+
+Il comando ~denote~ può essere chiamato anche da Lisp. Leggere la stringa di
+documentazione per i tecnicismi.
+
+#+findex: denote-create-note
+Nell'interesse della scoperta, ~denote~ é anche avviabile sotto il nome di
+~denote-create-note~.
+
+*** L'opzione ~denote-prompts~
+:PROPERTIES:
+:CUSTOM_ID: h:f9204f1f-fcee-49b1-8081-16a08a338099
+:END:
+
+#+vindex: denote-prompts
+L'ozione utente ~denote-prompts~ determina come il comando ~denote~ si
+comporterà in modo interattivo
+([[#h:6a92a8b5-d766-42cc-8e5b-8dc255466a23][Creazione note standard]]).
+
+I comandi che richiedono l'input utente per costruire il nome file in
+Denote includono, ma non solo: ~denote~, ~denote-signature~, ~denote-type~, ~denote-date~
+, ~denote-subdirectory~, ~denote-rename-file~, ~denote-dired-rename-files~.
+
+- [[#h:887bdced-9686-4e80-906f-789e407f2e8f][Comandi utili per la creazione di note]]
+- [[#h:532e8e2a-9b7d-41c0-8f4b-3c5cbb7d4dca][Rinominare i file]]
+
+Il valore di questa opzione utente é una lista di simboli, che include uno
+qualsiasi dei seguenti:
+
+- =title=: Richiede il titolo della nuova nota ([[#h:403422a7-7578-494b-8f33-813874c12da3][L'opzione ~denote-history-completion-in-promts~]]).
+
+- =keywords=: Richiede, con completamento, le keywords per la nuova nota.
+  I candidati disponibili sono quelli specificati nell'opzione utente
+  ~denote-know-keywords~. Se l'opzione utente ~denote-infer-keywords~ é
+  non-nil, le keywords nei nomi dei file nota esistenti sono incluse nella
+  lista dei candidati. Il prompt =keywords= usa ~completing-read-multiple~, in
+  modo che possa accettare multiple keyword separate da una virgola (o
+  quelsiasi cosa sia il valore di ~crm-separator~).
+
+- =file-type=: Richiede, con completamento, per il tipo di file della nuova
+  nota. I candidati disponibili sono quelli specificati nell'opzione utente
+  ~denote-file-type~. Senza questo prompt, ~denote~ usa il valore di default di
+  ~denote-file-type~.
+
+- =subdirectory=: Richiede, con completamento, per la sotto-directory della
+  nuova nota. I candidati disponibili sono i valori dell'opzione utente
+  ~denote-directory~ e tutti le loro sotto-directory. Ogni sotto-directory
+  deve essere esistente: Denote non le creerà.
+
+- =date=: Richiede la data per la nuova nota. Si aspetterà un input tipo
+  2022-06-16 o una data con orario: 2022-06-16 14:30. Senza il prompt =date=,
+  il comando ~denote~ usa il ~current-time~.
+
+  [[#h:e7ef08d6-af1b-4ab3-bb00-494a653e6d63][L'opzione denote-date-prompt-use-org-read-date]].
+
+- =template=: Richiede una KEY tra le ~denote-templates~. Il valore di questa
+  KEY é usato per popolare la nuova nota con del contenuto, quindi dopo il
+  frontespizio ([[#h:f635a490-d29e-4608-9372-7bd13b34d56c][L'opzione denote-templates]]).
+
+- =signature=: Richiede una stringa arbitraria che può essere usata per
+  stabilire una relazione sequenziali tra i file (es. 1, 1a, 1b, 1b1, 1b2,
+  ...). La firma non ha una funzione strettamente definita e sono sta
+  all'utente applicare nel modo che ritiene più opportun. Un caso d'uso é
+  quello di implementare il systema Zettelkasten di Niklas Luhmann per la
+  sequenza delle note (Folgezettle). Le firme sono incluse nel frontespizio
+  del file. Sono riservate solo per la creazione di una sequenza nella
+  lista di file, almeno per il momento. Per inserire un link che includa la
+  firma, usa il comando ~denote-link-with-signature~
+  ([[#h:066e5221-9844-474b-8858-398398646f86][Inserire link ad un file con
+  firma]]).
+
+Le richieste avvengono nell'ordine dato.
+
+Se il valore di questa opzione utente é nil, nessuna prompt viene usato. Il
+file name risultante consisterà in un identificativo (es. la data e
+l'orario) e un tipo di estensione supportata (per ~deneto-file-type~).
+
+Ricordiamo che lo schema standard di Denote per la denominazione dei file é
+denfinito come segue ([[#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][Lo schema
+di file-mane]]):
+
+: DATE--TITLE__KEYWORDS.EXT
+
+Se uno od entrambi i prompt =title= e =keywords= sono inclusi nel valore
+della variabile, il nome del file può avere una di queste permutazioni:
+
+: DATE.EXT
+: DATE--TITLE.EXT
+: DATE__KEYWORDS.EXT
+
+Quando sei in dubbio, includi sempre i prompt =title= e =keywords=.
+
+In fine, questa opzione utente ha effetto nell'uso interattivo di ~denote~ o
+gli altri comandi di rilievo (gli utenti avanzati possono chiamarlo da
+Lisp). Nell'uso di Lisp, il comportamento é sempre quello che il chiamante
+specifica, basandosi sugli argomenti supplementari.
+
+*** L'opzione ~denote-history-completion-in-prompts~
+:PROPERTIES:
+:CUSTOM_ID: h:403422a7-7578-494b-8f33-813874c12da3
+:END:
+
+#+vindex: denote-history-completion-in-prompts
+L'opzione utente ~denote-history-completion-in-prompts~ disattiva/attiva il
+completamento della cronologia in tutti i
+~denote-prompts-with-history-as-completion~.
+
+Quando questa opzione utente é impostata al valore non-nil, Denote userà le
+voci della cronologia del minibuffer come candidati di completamento in
+tutti i ~denote-prompts-with-history-as-completition~. Questo mostrerà il
+precedente input dalle loro rispettive cronologie come possibili valori da
+selezionare, o di (i) inserirli alla lettera o (ii) con l'intento di
+modificarli ulteriormente (dipende dall'interfaccia utente del minibuffer,
+si può selezionare un candidato con =TAB= sensa uscire dal minibuffer, o
+all'opposto che é =RET= normalmente per selezionare e uscire).
+
+Quando questa opzione utente é impostata a un valore nil, tutti i
+~denote-prompts-with-history-as-completion~ non useranno il completamento del
+minibuffer: richiederà solo una stringa di caratteri. La loro cronologia é
+ancora avviabile attraverso tutte le modalità per ricevere la cronologia
+nel minibuffer, come con il comando ~previous-history-element~.
+
+Il completamento della cronologia permette ancora valori arbitrari che
+possono essere forniti come input: non devono necessariamente corrispondere
+ai candidati disponibili del minibuffer.
+
+Nota che alcuni prompt, come ~denote-keywords-prompt~, usa sempre il
+completamento del minibuffer, a causa della specificità dei loro dati.
+
+[ Considera di abilitare il buolt-in ~savehist-mode~ pre una cronologia del
+minibuffer persistenti tra sessioni. ]
+
+*** L'opzione ~denote-template~
+:PROPERTIES:
+:CUSTOM_ID: h:f635a490-d29e-4608-9372-7bd13b34d56c
+:END:
+
+[ Aggiornamento come parte di {{{development-version}}} per accettare una
+una funzione che ritorna una stringa. Questa é in aggiunta all'accetazione
+di un stringa.]
+
+#+vindex: denote-template
+L'opzione utente ~denote-template~ é una lista di associazioni (alist) di
+modelli di contenuto per le nuove note. Un template é un testo arbitrario
+che Denote aggiunge alle nuove note appena create subito dopo il
+frontespizio.
+
+I modelli sono espressi come un associazione di =(KEY . VALUE)=.
+
+- La =KEY= é il nome che identifica il template. Esso é un simbolo
+  arbitrario, come =report=, =memo=, =statement=.
+
+- Il =VALUE= é o una stringa o il simbolo di una funzione.
+
+  - Se é una stringa, allora é testo ordinario che Denote inserirà così
+    comè. Puo contenere caratteri di newline per aggiungere spazi. Il
+    manuale di Denote contiene esempi di come usare la funzione ~concat~,
+    oltre a scrivere una riga generica.
+
+  - Se é una funzione, viene chiamata senza argomenti e si aspetta che
+    ritorni una stringa. Denote chiamerà la funzione e inserirà il
+    risultato nel buffer.
+
+L'utenet può scegliere un template o invocando il comando ~denote-template~ o
+cambiando l'opzione utente ~denote-prompts~ per mostrare sempre un prompt per
+un modello quando si chiama il comando ~denote~.
+
+[[#h:f9204f1f-fcee-49b1-8081-16a08a338099][L'opzione denote-prompts]].
+
+[[#h:887bdced-9686-4e80-906f-789e407f2e8f][Comandi utili per la creazione
+di note]].
+
+I modelli posso essere scritti direttamente some una larga stringa. Per
+esempio (il carattere =\n= é letto come newline):
+
+#+begin_src emacs-lisp
+(setq denote-templates
+      '((report . "* Some heading\n\n* Another heading")
+        (memo . "* Some heading
+
+,* Another heading
+
+")))
+#+end_src
+
+Le stringhe lunghe possono essere più facili da digitare, ma interpretano
+l'indentazione alla lettera. Anche, se non scalano bene. Il modo migliore é
+usare un pò di codice Elisp per strutturare la stringa. Generalmente può essere
+fatto con la funzione ~concat~, che unisce diverse stringhe in una sola. Di
+seguito la stessa cosa dell'esempio precedente:
+
+#+begin_src emacs-lisp
+(setq denote-templates
+      `((report . "* Some heading\n\n* Another heading")
+        (memo . ,(concat "* Some heading"
+                         "\n\n"
+                         "* Another heading"
+                         "\n\n"))))
+#+end_src
+Ricordo che per valutare una funzione all'interno di una alist dobbiamo
+usare il carattere backtick per quotare la alist (NON il quot dritto) e
+anche mettere una virgola prima dell'espressione che sarà valutata. Il
+~concat~ qui non é sensibile all'indentazione, quindi sarà facile aggiustarlo
+per una migliore leggibilità.
+
+Quando il =VALUE= é una funzione, avremmo questo:
+
+#+begin_src emacs-lisp
+(setq denote-templates
+      `((report . "* Some heading\n\n* Another heading")
+        (blog . my-denote-template-function-for-blog) ; a function to return a string
+        (memo . ,(concat "* Some heading"
+                         "\n\n"
+                         "* Another heading"
+                         "\n\n"))))
+#+end_src
+
+[ Questo é parte di {{{development-versione}}}. ]
+
+In questo esempio, ~my-denote-template-function-for-blog~ é una funzione che
+ritorna una stringa. Denote avrà cura di inserirla nel buffer.
+
+DEV NOTE: Non forniremo ulteriori esempi a questo punto, sentiti libero di
+chiedere aiuto se le informazioni fornite qui non sono
+sufficenti. Amplieremo il manuale di conseguenza.
+
+*** Comandi utili per la creazione di note
+:PROPERTIES:
+:CUSTOM_ID: h:887bdced-9686-4e80-906f-789e407f2e8f
+:END:
+
+A volte l'utente ha bisogno di creare una nota che ha diversi requisiti di
+quelli di ~denote~ ([[#h:6a92a8b5-d766-42cc-8e5b-8dc255466a23][Creazione note
+standard]]). Quindi questo può essere arggiunto cambiando l'ozione utente
+~denote-prompt~, ci sono casi dove un metodo ad-hoc é quello appropriato
+([[#h:f9204f1f-fcee-49b1-8081-16a08a338099][L'opzione denote-prompts]]).
+
+Per questo fine, Denote fornisce i seguenti comandi interattivi utili per
+creare note. Lavorano tutti aggiungendo un nuovo prompt all'esistente
+~denote-prompts~.
+
++ Creare note specificando il tipo di file :: Il comanfdo ~denote-type~ crea
+  una nota mentre richiede per il tipo di file.
+
+  Questo equivale a chiamare ~denote~ quando ~denote-prompts~ ha il prompt
+  =file-type= aggiunto ai suoi prompt esistenti. In termini pratici, questo
+  permette di produrre, dire, una nota in Markdown anche se normalmente le
+  scrivi in Org ([[#h:6a92a8b5-d766-42cc-8e5b-8dc255466a23][Creazione note
+  standard]]).
+
+  #+findex: denote-create-note-using-type
+  ~denote-create-note-using-type~ é un alias di ~denote-type~.
+
++ Crea note usando la data :: Normalmente, Denote legge la data ed
+  orario corrente per costruire l'identificativo unico della nuova nota
+  creata ([[#h:6a92a8b5-d766-42cc-8e5b-8dc255466a23][Creazione note
+  standard]]). Tuttavia, a volte, l'utente necessita di impostare uno
+  specifico valore di data+orario.
+
+  Questo é dove il comando ~denote-date~ entra. Crea una nota che richiedendo
+  per una data. La data puo essere nella notazione YEAR-MONTH-DAY tipo
+  =2022-06-30= o con anche l'orario: =2022-06-16 14:30=.
+
+  [[#h:e7ef08d6-af1b-4ab3-bb00-494a653e6d63][L'opzione
+  denote-date-prompt-use-org-read-date]].
+
+  Questo equivale a chiamare ~denote~ quando ~denote-prompts~ ha il prompt =date=
+  aggiunto ai sui prompt esistenti.
+
+  #+findex:denote-create-note-using-data
+  ~denote-create-note-using-data~ é un alias di ~denote-data~.
+
++ Creare note in una specifica directory :: Il comando ~denote-subdirectory~
+  crea una nota che richiederà per una sotto-directory. I candidati
+  disponibili incluso il valore della variabile ~denote-directory~ e ogni
+  sotto-directory (Denote non crea sutto-directory).
+
+  Questo é l'equivalente di chiamare ~denote~ quando ~denote-prompts~ ha il
+  prompt =subdirectory= aggiunto ai suoi prompt esistenti.
+
+  #+findex: denote-create-note-in-subdirectory
+  ~denote-create-note-in-subdirectory~ é un alias un pò più descrittivo di
+  ~denote-subdirectory~.
+
++ Creare note e aggiungere un modello :: Il comando ~denote-template~ crea
+  una nuova nota ed inserisce lo specifico template sotto al frontespizio
+  ([[#h:f635a490-d29e-4608-9372-7bd13b34d56c][L'opzione
+  denote-templates]]). i candidati disponibili sono specificati
+  nell'opzione utente ~denote-templates~.
+
+  Questo equivale a chiamare ~denote~ quando ~denote-prompts~ ha il prompt
+  =template= aggiunto ai sui prompt esistenti.
+
+  #+findex: denote-create-note-with-template
+  ~denote-create-note-with-template~ é un alias al comando ~denote-template~,
+  per favorire la reperibilità.
+
++ Crea note con una firma :: Il comando ~denote-signature~ prima richiede per
+  una stringa arbitraria da usare nel campo opzionale =SIGNATURE= del nome del file e
+  dopo chiede per un titolo e delle keywords.
+  La firma é una stringa arbitraria di caratteri alfanumerici che possono
+  essere usati per stabilire una sequenza relazionale tra i file a livello
+  del loro nome (es. 1, 1a, 1b, 1b1, 1b2, ...).
+
+  Questo equivale a chiamare ~denote~ quando ~denote-prompts~ ha il prompt
+  =signature= aggiunto ai sui prompt esistenti.
+
+  ~denote-create-note-using-signature~ é un alias al comando ~denote-signature~
+  destinato a rendere la funzione più facilmente individuabile.
+
+
+
+  
+**** Scrivi i tuoi comandi ideali
+:PROPERTIES:
+:CUSTOM_ID: h:11946562-7eb0-4925-a3b5-92d75f1f5895
+:END:
+
+I comandi ideali che ti forniamo coprono solo gli use-cases di base
+([[#h:887bdced-9686-4e80-906f-789e407f2e8f][Comandi utili per la creazione
+di note]]). L'utente potrebbe richiedere combinazioni non contemplate, come
+per la richiesta di un modello o di una sotto-directory, invece di uno solo
+dei due. Per questo scopo, mostreremo come seguire il codice che usiamo in
+Denote per scrivere le tue varianti di questi comandi.
+
+Per prima cosa guara la definizione di uno di questi comandi.
+Hanno tutti lo stesso aspetto, ma per questo esempio usiamo
+~denote-subdirectory~:
+
+#+begin_src emacs-lisp
+(defun denote-subdirectory ()
+  "Create note while prompting for a subdirectory.
+
+Available candidates include the value of the variable
+`denote-directory' and any subdirectory thereof.
+
+This is equivalent to calling `denote' when `denote-prompts' is
+set to '(subdirectory title keywords)."
+  (declare (interactive-only t))
+  (interactive)
+  (let ((denote-prompts '(subdirectory title keywords)))
+    (call-interactively #'denote)))
+#+end_src
+
+La parola con il trattino dopo ~defun~ é il nome della funzione. Deve essere
+unico. Dopo abbiamo la stringa di documentazione (o "doc string") che é
+utile all'utente.
+
+Questa funzione é ~interactive~ (interattiva), significa che può essere
+chiamata tramite =M-x= o essere assegnata a un combinazione (key
+binding). Abbiamo quindi il legame locale di ~denote-prompts~ per la
+combinazione desiderata ("local" significa che é specifica per questa
+funzione senza effetto sugli altri contesti). In fine, chiama
+interattivamente il comando standard ~denote~, in modo da utilizzare tutti i
+prompt nell'ordine specificato.
+
+Supponiamo di volere un comando che (i) chieda un modello e (ii) una
+sotto-directory ([[#h:f635a490-d29e-4608-9372-7bd13b34d56c][L'opzione
+~denote-templates~ ]]). Tutto quello di cui abbiamo bisogno é un comando con
+un nome univoco:
+
+#+begin_src emacs-lisp
+;; Like `denote-subdirectory' but also ask for a template
+(defun denote-subdirectory-with-template ()
+  "Create note while also prompting for a template and subdirectory.
+
+This is equivalent to calling `denote' when `denote-prompts' is
+set to '(template subdirectory title keywords)."
+  (declare (interactive-only t))
+  (interactive)
+  (let ((denote-prompts '(template subdirectory title keywords)))
+    (call-interactively #'denote)))
+#+end_src
+
+Le modifiche a ~denote-prompts~ determinano come il comando si comporterà
+([[#h:f9204f1f-fcee-49b1-8081-16a08a338099][L'opzione
+denote-prompts]]). Usa questo paradigma per scrivere le tue varianti che
+dopo puoi assegnare alle chiavi, invocando =M-x=, o aggiungendole alla lista
+dei comandi disponibili in ~denote-command-prompt~
+([[#h:98c732ac-da0e-4ebd-a0e3-5c47f9075e51][Scelgli i comandi da richiedere]]).
+
+*** L'opzione ~denote-save-buffers~
+:PROPERTIES:
+:CUSTOM_ID: h:bf80f4cd-6f56-4f7c-a991-8573161e4511
+:END:
+
+#+vindex: denote-save-buffers
+L'opzione utente ~denote-save-buffer-after-creation~ controlla se i comandi
+che creano le nuove note salvino o meno il loro buffer.
+
+Il comportamento di default dei comandi come ~denote~ (o relazionati) é di
+non salvare il buffer che hanno creato
+([[#h:17896c8c-d97a-4faa-abf6-31df99746ca6][Punto d'ingresso]]). Questo da
+all'utente la possibilità di revisionare il testo prima di scriverlo nel
+file. L'utente può scegliere di eliminare il buffer non salvato, senza
+quindi creare la nuova nota
+([[#h:bf80f4cd-6f56-4f7c-a991-8573161e4511][L'opzione
+~denote-save-buffer-after-creation~ ]]).
+
+Questa opzione e; anche aplicata alle note colpite dal comando di
+rinominazione (~denote-rename-file~ e relativi).
+
+Se questa oprione utente é impostata ad un valore non-nil, allora i buffer
+sono salvati automaticamente. L'assunzione é che l'utente che opta per
+questa funzionalità abbia famigliarità con l'operazione ~denote-rename-file~
+(o relativi) e sa che é riutilizzabile
+([[#h:532e8e2a-9b7d-41c0-8f4b-3c5cbb7d4dca][Rinominare i file]]).
+
+
+*** L'opzione ~denote-date-prompt-use-read-date~
+:PROPERTIES:
+:CUSTOM_ID: h:e7ef08d6-af1b-4ab3-bb00-494a653e6d63
+:END:
+
+Di default, Denote usa i suoi semplici prompt per ricevere la data o la
+data+orario ([[#h:f9204f1f-fcee-49b1-8081-16a08a338099][L'opzione
+denote-prompts]]). Questo va bene quando l'opzione ~denote-prompts~ include
+un simbolo =data= e/o quando l'utente invoca il comando ~denote-data~.
+
+#+vindex: denote-date-prompt-use-org-read-date
+Gli utenti che vogliono beneficiare di un metodo per la selezione della
+data più avanzatom, che é in comune nell'interazione con Org mode, può
+impostare l'opzione utente ~denote-date-prompt-use-org-read-date~ ad un
+valore non-nil.
+
+** Creare una nota dal corrente sottoalbero Org
+:PROPERTIES:
+:CUSTOM_ID: h:d0c7cb79-21e5-4176-a6af-f4f68578c8dd
+:END:
+
+Nel linguaggio Org, un elemento con tutti i sui sottotitoli e altri
+contenuti é una "subtree". Denote puo operare nel sottoalbero per estrarlo
+dal file corrente e creare una nuovo file aldifuori di esso. Un possibile
+workflow é quello di raccogliere i pensieri in un singolo documento e
+produrre note autonome più lunghe al momento della revisione.
+
+#+findex: denote-org-extras-extract-org-subtree
+Il comando ~denote-org-extras-extract-org-subtree~ é per questo scopo. Lui
+crea una nuova nota Denote usando il sottoalbero Org corrente. Per fare
+questo, rimuove il sottoalbero dal file corrente e muove il suo contenuto
+in un nuovo file. Questo comando é parte delle estensioni opzionali
+=denote-org-extras.el=, che é parte del pacchetto ~denote~.
+Viene automaticamente caricato solo se un dei sui comandi viene invocato.
+
+Il testo dell'intestazioni del sottoalbero diventa il =#+title= della nuova
+nota. Tutto il resto viene inserito comé.
+
+Se l'intestazione ha un qualsiasi tag, loro vengono usati come keywords
+della nuova nota. Se il file Org ha un qualsiasi =#+filetags= anche loro
+vengono presi (i =#+filetags= di Org sono ereditati dalle intestazioni). Se
+ninete di questo é vero e l'opzione utente ~denote-prompts~ include un
+elemento keyword, allora ~denote-org-extras-extract-org-subtree~ richiederà
+per le keyword. Altrimenti la nuova nota non avrà keyword
+([[#h:ad4dde4a-8e88-470a-97ae-e7b9d4b41fb4][Aggiungi o rimuovi keyword
+interattivamente]]).
+
+Se l'intestazione ha un drawer =PROPERTIES=, viene mantenuto per revisioni
+future.
+
+Se il drawer =PROPERTIES= delle intestazioni include una proprietà =DATE= o
+=CREATED=, o se esiste una dichiarazione =CLOSE= con un valore di timestamp,
+usa quello da derivare la data (o la data e l'orario) della nuova nota (se
+c'é solo la data, l'orario viene impostato come 00:00). Se più di una di
+queste cose é presente, l'ordine di preferenza é =DATA=, oppure =CREATED=,
+oppure =CLOSE=. Se nessuno di questi é presente, il momento corrente viene
+usato. Se ~denote-prompts~ include un elemento per una data, allora, a questo
+punto, il comando richiede per una data (vedere anche
+~denote-date-prompt-use-org-read-date~).
+
+Per il resto, consulta il valore dell'opzione utente ~denote-prompts~ negli
+scenari seguenti:
+
+- Opzionalmente richiede una sottodirectory, altrimenti produce la nuova
+  nota nella ~denote-directory~.
+- Opzionalmente richiede una nuova firma, altrimenti non ne usa nessuna.
+
+La nuova nota é un file Org indipendentemente dall'opzione utente
+~denote-file-type~.
+
+** Creare note usando Org capture
+:PROPERTIES:
+:CUSTOM_ID: h:656c70cd-cf9a-4471-a0b5-4f0aaf60f881
+:END:
+
+Per integrazione con ~org-capture~, l'utente deve prima aggiungere il
+modello corrispondente. Come ad esempio:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'org-capture
+  (add-to-list 'org-capture-templates
+               '("n" "New note (with Denote)" plain
+                 (file denote-last-path)
+                 #'denote-org-capture
+                 :no-save t
+                 :immediate-finish nil
+                 :kill-buffer t
+                 :jump-to-captured t)))
+#+end_src
+
+[ In futuro, potremmo sviluppare Denote in modo che non sia necessaria
+l'interazione manuale. É necessario un moggiore feedback dagli utenti per
+identificare i workflow più rilevanti. ]
+
+Una volta aggiunto un template, é possibile accederci tramite la specifica
+chiave. Se, per esempio, ~org-capture~ é associata a =C-c c=, allora la
+creazione delle note viene iniziata con =C-c c n=, per l'esempio sopra. Dopo
+questo, il processo é lo stesso di invocare direttamnte ~denote~, cioé: da una
+richiesta per il titolo e da una richiesta di parole chiave
+([[#h:6a92a8b5-d766-42cc-8e5b-8dc255466a23][Creazione note standard]]).
+
+#+vindex: denote-capture-specifiers
+Gli utenti possono preferire di sfruttare ~org-capture~ in modo da estendere
+la creazione di file con gli specificatori descritti nella documentazione
+~org-capture-tempales~ (come catturare la regione attiva e/o creare un nuovo
+collegamento che punta al dato contesto).
+
+IMPORTANTE. Dato il particolare schena di nome dei file, che é derivato
+dinamicamente, tali specificatori o altro testo arbitrario non deve essere
+scritto direttamente nel modello. Invece, devono essere assegnati
+all'opzione utente ~denote-org-capture-specifiers~, che é interpretato dalla
+funzione ~denote-org-capture~. Un esempio con il nostro valore di default:
+
+#+begin_src emacs-lisp
+(setq denote-org-capture-specifiers "%l\n%i\n%?")
+#+end_src
+
+Nota che ~denote-org-capture~ ignora il ~denote-file-type~: é sempre impostato
+all'enstensione di file Org per essere sicuri che il processo capture
+lavori come si deve con le note create, specialmente con l'output
+desiderato dal ~denote-org-capture-specifiers~.
+
+** Creare note con lo specifico prompt usato da Org capture
+:PROPERTIES:
+:CUSTOM_ID: h:95b78582-9086-47e8-967f-62373e2369a0
+:END:
+
+Questa sezione presume che si conosca di come lavorino Denote+org-capture,
+come spiegato nella sezione precedente
+([[#h:656c70cd-cf9a-4471-a0b5-4f0aaf60f881][Creare note usando Org
+capture]]).
+
+#+findex: denote-org-capture-with-prompts
+Nella sezione precedente mostra come definire un template Org capture che
+richieda sempre un titolo e delle keyword. Ci sono, tuttavia, casi dove
+l'utente vuole più controllo sul tipo di input che Denote richiederà. A
+questo scopo, forniamo una funzione ~denote-org-capture-with-prompts~. Sotto
+lo spieghiamo e poi mostriamo alcuni esempu di come usarlo.
+
+~denote-org-capture-with-prompts~ é come ~denote-org-capture~ ma con parametri
+opzionali.
+
+Quando chiamato senza argomenti, non mostra alcun che. Ritorna solamente il
+frontespizio con il campo del titolo e delle parole chiave vuoti e la data
+e il campo identificatore specificato. Construisce anche il nome del file
+che consiste di solo l'identificatore più l'estensione di nome file Org.
+
+[[#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][Lo schema di file-naming]].
+
+Altrimenti, produce un minibuffer che richiede per ogni valore non-nil che
+corrisponde agli argomenti =TITLE=, =KEYWORDS=, =SUBDIRECTORY=, =DATE= e
+=TEMPLATE=. I prompt sono quelli usati dal comando standard ~denote~ e di tutti
+i sui utili comandi.
+
+[[#h:17896c8c-d97a-4faa-abf6-31df99746ca6][Punto di ingresso]].
+
+Quando ritorna il contenuto che riempie il template Org capture, la
+sequenza é come segue: frontespizio, =TEMPLATE= e poi il valore dell'opzione
+utente ~denote-org-capture-specifiers~.
+
+Nota importante: nel caso in cui =SUBDIRECTOY= l'attuale sottodirectory deve
+esistere---Denote non le crea quelle. Stesso principio per i =TEMPLATE= come
+modelli devono esistere e sono specificati nell'opzione ~denote-templates~.
+
+Questo é come può essere incorporato ~denote-org-capture-with-prompts~ nei
+propri template Org capture. Invece di passare un generico ~t~ che é
+difficile da ricordare il significato dell'argomento, usiamo per comodità
+le parole chiave con una semantica tipo =:tile= (internamente questo non ha
+inportanza in quanto il valore viene considerato non-nil, quindi =:foo= per
+il =TITLE= é considerato come =:tille= o ~t~).
+
+#+begin_src emacs-lisp
+;; This prompts for TITLE, KEYWORDS, and SUBDIRECTORY
+(add-to-list 'org-capture-templates
+             '("N" "New note with prompts (with denote.el)" plain
+               (file denote-last-path)
+               (function
+                (lambda ()
+                  (denote-org-capture-with-prompts :title :keywords :subdirectory)))
+               :no-save t
+               :immediate-finish nil
+               :kill-buffer t
+               :jump-to-captured t))
+
+;; This prompts only for SUBDIRECTORY
+(add-to-list 'org-capture-templates
+             '("N" "New note with prompts (with denote.el)" plain
+               (file denote-last-path)
+               (function
+                (lambda ()
+                  (denote-org-capture-with-prompts nil nil :subdirectory)))
+               :no-save t
+               :immediate-finish nil
+               :kill-buffer t
+               :jump-to-captured t))
+
+;; This prompts for TITLE and SUBDIRECTORY
+(add-to-list 'org-capture-templates
+             '("N" "New note with prompts (with denote.el)" plain
+               (file denote-last-path)
+               (function
+                (lambda ()
+                  (denote-org-capture-with-prompts :title nil :subdirectory)))
+               :no-save t
+               :immediate-finish nil
+               :kill-buffer t
+               :jump-to-captured t))
+#+end_src
+
+** Creare una nota con i contenuti della regione
+:PROPERTIES:
+:CUSTOM_ID: h:2f8090f1-50af-4965-9771-d5a91a0a87bd
+:END:
+
+#+findex: denote-region
+Il comando ~denote-region~ prende il contenuto della regione attiva e poi
+chiama il comando ~denote~. Quando una nuova nota é creata, inserisce il
+contenuto della regione al suo interno. Questo é molto utile per elaborare
+velocemente una porzione di testo o catturarlo per future referenze.
+
+#+vindex: denote-region-after-new-note-functions
+Quando il comando ~denote-region~ é chiamato con una regione attiva,
+finalizza il suo lavoro richiamando ~denote-region-after-new-note-functions~.
+Si tratta di un hook anomalo, significa che le funzioni aggiuntegli sono
+chiamate con argomenti. Gli argomenti sono due, rappresntano l'inizio e la
+fine della posizione del novo testo inserito.
+
+Un caso d'uso comune per gli utenti Org mode é di chiamare il comando
+~org-insert-structure-template~ dopo l'inserimento di una regione. Emacs
+richiederà quindi per una modello di struttura, come quello corrispondente
+ad un blocco sorgente. In questo caso la funzione aggiunta da
+~denote-region-after-new-note-functions~ non ha bisogno delle suddette
+argomentazioni: può semplicemente dichiarare questi come ingnorati dai nomi
+degli argomenti prefissi con un underscore (un uderscore é sufficiente ma é
+meglio includere un nome per chiarezza). Per esempio, il codice seguente
+richiederà per un modello di struttura non appena ~denote-region~ é apposto:
+
+#+begin_src emacs-lisp
+(defun my-denote-region-org-structure-template (_beg _end)
+  (when (derived-mode-p 'org-mode)
+    (activate-mark)
+    (call-interactively 'org-insert-structure-template)))
+
+(add-hook 'denote-region-after-new-note-functions #'my-denote-region-org-structure-template)
+#+end_src
+
+Ricorda che ~denote-region-after-new-note-functions~ non sono chiamte se
+~denote-region~ é usata senza una regione attiva.
+
+*** Una ~denote-region~ personale che fa riferimento all'origine
+:PROPERTIES:
+:CUSTOM_ID: h:eb72086e-05be-4ae3-af51-7616999fc7c9
+:END:
+
+Il comando ~denote-region~ crea semplicemente una nuova nota ed include il
+contenuto della regione evidenziata come testo iniziale della nota
+([[#h:2f8090f1-50af-4965-9771-d5a91a0a87bd][Creare una nota con i
+contenuti della regione]]).
+Comunque, fli urenti potrebbero volere un workflow più snello dove il
+comando é sempre usato per catturare le citazioni da altri sorgenti. In
+questo esempio, consideriamo "gli altri sorgenti" provenienti da buffer
+Emacs EWW (con ~M-x eww~) o file regolari all'esterno della ~denote-directory~.
+
+[ Questo é un concetto di prova che non copre tutti i casi. Se qualcuno
+vuole usare una variazione di questo, me lo faccia sapere. ]
+
+#+begin_src emacs-lisp
+;; Variant of `my-denote-region' to reference the source
+
+(defun my-denote-region-get-source-reference ()
+  "Get a reference to the source for use with `my-denote-region'.
+The reference is a URL or an Org-formatted link to a file."
+  ;; We use a `cond' here because we can extend it to cover move
+  ;; cases.
+  (cond
+   ((derived-mode-p 'eww-mode)
+    (plist-get eww-data :url))
+   ;; Here we are just assuming an Org format.  We can make this more
+   ;; involved, if needed.
+   (buffer-file-name
+    (format "[[file:%s][%s]]" buffer-file-name (buffer-name)))))
+
+(defun my-denote-region ()
+  "Like `denote-region', but add the context afterwards.
+For how the context is retrieved, see `my-denote-region-get-source-reference'."
+  (interactive)
+  (let ((context (my-denote-region-get-source-reference)))
+    (call-interactively 'denote-region)
+    (when context
+      (goto-char (point-max))
+      (insert "\n")
+      (insert context))))
+
+;; Add quotes around snippets of text captured with `denote-region' or `my-denote-region'.
+
+(defun my-denote-region-org-structure-template (beg end)
+  "Automatically quote (with Org syntax) the contents of `denote-region'."
+  (when (derived-mode-p 'org-mode)
+    (goto-char end)
+    (insert "#+end_quote\n")
+    (goto-char beg)
+    (insert "#+begin_quote\n")))
+
+(add-hook 'denote-region-after-new-note-functions #'my-denote-region-org-structure-template)
+#+end_src
+
+Con quanto esposto sopra, chiamando il comando ~my-denote-region~ esegue le
+seguenti operazioni:
+
+- Crea una nuno nota come al solito, richiedenodo per i dati rilevanti.
+- Inserire il contenuto della regione sotto il frontespizio della nuova nota.
+- Aggiunge marcatori di blocco quotati, stile Org, attorno alla regione inserita.
+- Aggiunge un collegamento all'URL o file da dove era stata chiamata ~my-denote-region~. 
+
+** Apre una nota esistente o la crea se non esiste
+:PROPERTIES:
+:CUSTOM_ID: h:ad91ca39-cf10-4e16-b224-fdf78f093883
+:END:
+
+#+findex: denote-open-or-create
+#+findex: denote-open-or-create-winth-command
+A volte é necessario interrompere la sessione di scrittura in corso per
+aprire una note esistente, se questa non esiste, la crea.
+Questo succede quando si presenta un nuovo pensiero laterale e l'utente
+vuole confermare che esista una nuova voce per lui. A questo scopo, Denote
+fornisce il comando ~denote-open-or-create~ o meglio come la più flessibile
+controparte ~denote-open-or-create-with-command~.
+
+~denote-open-or-create~ richiede di visitare un file nella
+~denote-directory~. A questo punto, l'utente deve digitare i termini di
+ricerca per trovare un nome di file. Se l'input non ritorna nessun
+risultato e l'utente conferma la propria scelta di procedere (solitamente
+premendo RET due volte, dipende da come é impostato il minibuffer),
+~denote-open-or-create~ chiamerà il comando ~denote~ interattivamente per
+creare una nuova nota. Utilizzera quindi le richieste che ~denote~
+normalmente ha, per le opzioni utente ~denote-prompts~
+([[#h:6a92a8b5-d766-42cc-8e5b-8dc255466a23][Creazione note standard]]). Se
+é coninvolto la richiesta del titolo (il comportamento di default),
+~denote-open-or-create~ imposta su questo prompt in modo che il precedente
+input sia il titolo di default della nota che sta per essere creata. Questo
+significa che l'utente può premere RET al prompt vuoto per ri-usare quello
+digitato in precedenza. Disponibili anche i comandi per utilizzare gli
+input precedenti della cronologia (=M-p= o =M-n= nel minibuffer, che chiama di
+default ~previous-history-element~ e ~next-history-element~). Accedere alla
+history é utile a, per esempio, fare future modifiche al testo disponibile.
+
+~denote-open-or-create-with-command~ é come il precedente, fatta eccezione
+quando viene creata una nuova nota che prima richiede lo specifico comando
+di creazione file da usare ([[#h:17896c8c-d97a-4faa-abf6-31df99746ca6][Punto
+d'ingresso]]). Per esempio, l'utente potrebbe volere specificare una nuova
+firma per questo nuovo file, quindi può selezionare il comando
+~denote-signature~.
+
+Denote fornisce funzioni simili per il collegare note esistenti o creare
+una nuova ([[#h:b6056e6b-93df-4e6b-a778-eebd105bac46][Collega una nota o
+creala se non esiste]]).
+
+** Mantenere directory silos separate per le note
+:PROPERTIES:
+:CUSTOM_ID: h:15719799-a5ff-4e9a-9f10-4ca03ef8f6c5
+:END:
+#+cindex: Note silos
+
+L'opzione utente ~denote-directory~ accetta un valore che rappresenta la path
+di una directory, per esempio =~/Documents/notes=. Normalmente, l'utente ha
+un unico posto dove salvare tutte le sue note, in alcuni casi questa cosa é
+sufficiente.
+
+C'é, tuttavia, la possibilità di mantenere directory separate per le
+note. Con "separate", intendiamo che non comunicano con le altre note:
+nessun link tra loro, nessuna keyword, niente. Pensa ad uno scenario dove
+un insieme di note é a scopo privato e un'altro é per un datore di
+lavoro. Chiameremo queste directory separate "silos".
+
+Per creare silos, l'utente deve specificare una variabile locale nella
+radice della directory desiderata. Questo si può fare creando un file
+=.dir-locals.el=, con il contenuto seguente.
+
+#+begin_src emacs-lisp
+;;; Directory Local Variables.  For more information evaluate:
+;;;
+;;;     (info "(emacs) Directory Variables")
+
+((nil . ((denote-directory . "/path/to/silo/"))))
+#+end_src
+
+Quando ti trovi all'interno di una directory che continene questo file,
+tutti i comandi/funzione di Denote per la creazione delle note,
+collegamenti, le inferenti keyword avviabili, et cetera useranno il silos
+come loro punto di riferimento
+([[#h:e0d60749-194d-4677-b943-5e98fbf9ad1d][Come cambiare un silos]]). Loro
+non leggeranno il valore globale di ~denote-directory~. Il valore globale di
+~denote-directory~ é letto ovunque fatta eccezione per i silos.
+
+[[#h:0f72e6ea-97f0-42e1-8fd4-0684af0422e0][Usa comandi personalizzati
+per selezionare un silo]].
+
+In termini concreti, questa é una rappresentazione della struttura delle
+directory (notare il file =.dir-locals.el= é necessario solo per i silos):
+
+#+begin_example
+;; This is the global value of 'denote-directory' (no need for a .dir-locals.el)
+~/Documents/notes
+|-- 20210303T120534--this-is-a-test__journal_philosophy.txt
+|-- 20220303T120534--another-sample__journal_testing.md
+`-- 20220620T181255--the-third-test__keyword.org
+
+;; A silo with notes for the employer
+~/different/path/to/notes-for-employer
+|-- .dir-locals.el
+|-- 20210303T120534--this-is-a-test__conference.txt
+|-- 20220303T120534--another-sample__meeting.md
+`-- 20220620T181255--the-third-test__keyword.org
+
+;; Another silo with notes for my volunteering
+~/different/path/to/notes-for-volunteering
+|-- .dir-locals.el
+|-- 20210303T120534--this-is-a-test__activism.txt
+|-- 20220303T120534--another-sample__teambuilding.md
+`-- 20220620T181255--the-third-test__keyword.org
+#+end_example
+
+É possibile configurare altre opzioni utente di Denote per avere specifici
+valori per silo. Per esempio, questo camnbia ~denote-know-keywords~ solo per
+questo particolare silo:
+
+#+begin_src emacs-lisp
+;;; Directory Local Variables.  For more information evaluate:
+;;;
+;;;     (info "(emacs) Directory Variables")
+
+((nil . ((denote-directory . "/path/to/silo/")
+         (denote-known-keywords . ("food" "drink")))))
+#+end_src
+
+Quest'altro é come quello sopra, ma disabilita anche ~denote-infer-keywords~:
+
+#+begin_src emacs-lisp
+;;; Directory Local Variables.  For more information evaluate:
+;;;
+;;;     (info "(emacs) Directory Variables")
+
+((nil . ((denote-directory . "/path/to/silo/")
+         (denote-known-keywords . ("food" "drink"))
+         (denote-infer-keywords . nil))))
+#+end_src
+
+Per espandere la lista delle variabili locali, ad esempio coprire major
+mode specifici, possiamo fare qualcosa di simile a questo:
+
+#+begin_src emacs-lisp
+;;; Directory Local Variables.  For more information evaluate:
+;;;
+;;;     (info "(emacs) Directory Variables")
+
+((nil . ((denote-directory . "/path/to/silo/")
+         (denote-known-keywords . ("food" "drink"))
+         (denote-infer-keywords . nil)))
+ (org-mode . ((org-hide-emphasis-markers . t)
+              (org-hide-macro-markers . t)
+              (org-hide-leading-stars . t))))
+#+end_src
+
+Poichè non tutte le opzioni utente hanno un valore locale "sicuro", Emacs
+chiederà all'utene di confermare la sua scelta e di memorizzarla nel pezzo
+di codice Custom che normalmente viene aggiunto nel file init (o aggiunto al
+file specificato dall'opzione utente ~custom-file~).
+
+In fine, é possibile avere un ~.dir-locales.el~ per le sotto-directory di
+ogni ~denote-directory~. Forse per specificare un insieme di keyword
+conosciute, senza rendere le sotto-directory un silo assentante. Non ci
+dilungheremo su tale esempio, confidiamo che l'utente trovi la migliore
+impostazione per il suo workflow.
+
+Sentiti libero di chiedere aiuto se le informazioni fornite qui non sono
+sufficenti. Il manuale dove essere ampliato di conseguenza.
+
+*** Come cambiare silo
+:PROPERTIES:
+:CUSTOM_ID: h:e0d60749-194d-4677-b943-5e98fbf9ad1d
+:END:
+
+Se si passerà a una directory silo tutti i comandi Denote useranno il
+percorso del silo come ~denote-directory~, invece che i valori globali di
+questa variabile ([[#h:15719799-a5ff-4e9a-9f10-4ca03ef8f6c5][Mantenere
+directory silos separate per le note]]). Ci sono 3 modi di cambiare silo:
+
+1. Visitare un file dentro questa directory
+2. Usare il comando ~dired~ per aprire la directory in un buffer.
+3. Usare il comando ~cd~ per selezionare la directory senza muoverti dal
+   buffer corrente.
+
+*** Usa comandi personalizzati per selezionare un silo
+:PROPERTIES:
+:CUSTOM_ID: h:0f72e6ea-97f0-42e1-8fd4-0684af0422e0
+:END:
+
+[ Come parte della versione 2.1.0, i contenuti di questa sezione sono
+formalmente forniti nel dile =denote-silo-extras.el=. Lo manteniamo qui per
+gli utenti esistenti. Altrimenti il nuovo elemento nel manuale
+([[#h:e43baf95-f201-4fec-8620-c0eb5eaa1c85][=denote-silo-extras.el=]]). ]
+
+Implementiamo silos come valore di directory locale per l'opzione utent
+~denote-directory~. Questo significa che tutti i comandi sono letti dal valore
+locale se loro sono invocati da questo contesto. Per esempiom se
+=~/Video/recordings= é un silo e =~/Denote/notes= é il valore globale di
+default di ~denote-directory~ tutti i comandi leggeranno il percorso dei
+video quando chiamati da qui (es. usando Emcas ~dired~); ogni altro contesto
+leggerà il valore globale.
+
+[[#h:15719799-a5ff-4e9a-9f10-4ca03ef8f6c5][Maintain separate directory silos for notes]].
+
+Ci sono casi dove l'utente (i) vuole mantenere silos multipli e (ii)
+preferisce un modo interattivo per cambiare tra loro senza dover passare da
+Dired. Poiché questo é uno specifico workflow dell'utente, é facile avere
+diverso codice personalizzato per questo. Il seguente potrebbe essere
+aggiunto alla configurazione Denote dell'utente:
+
+#+begin_src emacs-lisp
+(defvar my-denote-silo-directories
+  `("/home/prot/Videos/recordings"
+    "/home/prot/Documents/books"
+    ;; You don't actually need to include the `denote-directory' here
+    ;; if you use the regular commands in their global context.  I am
+    ;; including it for completeness.
+    ,denote-directory)
+  "List of file paths pointing to my Denote silos.
+  This is a list of strings.")
+
+(defvar my-denote-commands-for-silos
+  '(denote
+    denote-date
+    denote-subdirectory
+    denote-template
+    denote-type)
+  "List of Denote commands to call after selecting a silo.
+  This is a list of symbols that specify the note-creating
+  interactive functions that Denote provides.")
+
+(defun my-denote-pick-silo-then-command (silo command)
+  "Select SILO and run Denote COMMAND in it.
+  SILO is a file path from `my-denote-silo-directories', while
+  COMMAND is one among `my-denote-commands-for-silos'."
+  (interactive
+   (list (completing-read "Select a silo: " my-denote-silo-directories nil t)
+         (intern (completing-read
+                  "Run command in silo: "
+                  my-denote-commands-for-silos nil t))))
+  (let ((denote-directory silo))
+    (call-interactively command)))
+#+end_src
+
+Con questo sistema, ~M-x my-denote-pick-silo-then-command~ utilizzerà il
+completamento del minibuffer per selezionare un silo attraverso le opzioni
+predefinite e dopo chiedere il comando da avviare in quel contesto.
+
+Nota che il vincolo(=let=) a ~denote-directory~ può essere utilizzata con
+comandi personalizzati e altre funzioni wrapper per sofrascrivere il valore
+globale di default di ~denote-directory~ per selezionare i silos.
+
+Per vedere un'altro esempio di funzioni wrapper che vincolano (=let=) a
+~denote-directory~, vedi:
+
+[[#h:d0c7cb79-21e5-4176-a6af-f4f68578c8dd][Extending Denote: Split an Org subtree into its own note]].
+
+*** =denote-silo-extras.el=
+:PROPERTIES:
+:CUSTOM_ID: h:e43baf95-f201-4fec-8620-c0eb5eaa1c85
+:END:
+
+=denote-silo-extras.el= fornisce opzionali funzioni utili per lavorare con i
+silos ([[#h:15719799-a5ff-4e9a-9f10-4ca03ef8f6c5][Mantenere directory silos
+separate per le note]]).
+Inizia caricando la necessaria libreria:
+
+#+begin_src emacs-lisp
+(require 'denote-silo-extras)
+#+end_src
+
+#+vindex: denote-silo-extras-directories
+L'opzione utente ~denote-silo-extras-direcotories~ specifica una lista di
+directory che l'utene può settare come ~denote-directory~ silos.
+
+#+findex: debnote-silo-extras-create-note
+Il comando ~denote-silo-extras-create-note~ richiede per una directory tra le
+~denote-silo-extras-directories~ e avvia il comando ~denote~ da là.
+
+#+findex: denote-silo-extras-open-or-create
+Similmente a sopra, il comando ~denote-silo-extras-open-or-create~ richiede
+per una directory tra le ~denote-silo-extras-directories~ e avvia il comando
+~denote-open-or-create~ da là.
+
+#+findex: denote-silo-extras-select-silo-then-command
+Il comando ~denote-silo-extras-select-silo-then-command~ richiede con il
+completamento del minibuffer per una directory tra le
+~denote-silo-extras-direcoties~.
+Dopo che l'utente ha selezionato il silo, un secondo prompt chiede per un
+comando Denote di creazione delle note da chiamare dall'interno di quel
+silo ([[#h:17896c8c-d97a-4faa-abf6-31df99746ca6][Punto d'ingresso]]).
+
+*** Fai in modo che Org export lavori con i silos
+:PROPERTIES:
+:CUSTOM_ID: h:fed09992-7c43-4237-b48f-f654bc29d1d8
+:END:
+
+L'infrastruttura Org export é disegnata per ignorare le variabili di
+directory locali. Questo significa che Denote silos, che dipendono
+dall'impostazione del valore locale della variabile ~denote-directory~, non
+lavorerà come ci si aspetta
+([[#h:15719799-a5ff-4e9a-9f10-4ca03ef8f6c5][Mantenere directory silos
+separate per le note]]). Più specificatamente, i collegamenti Denote non
+risolverebbero il file corretto, perché il loro percorso é cambiato durante
+il processo di esportazione.
+
+Ho portato questo problema all'attenzione del manutentore del pacchetto
+Org. Le line guida da parte loro é di usare la parola chiave =#+bind= per
+specificare un valore locale per la ~denote-directory~:
+<https://lists.gnu.org/archive/html/emacs-orgmode/2024-06/msg00206.html>.
+Il prerequisito é di settare ~org-export-allow-bind-keywords~ ad un valore
+non-nil:
+
+#+begin_src emacs-lisp
+(setq org-export-allow-bind-keywords t)
+#+end_src
+
+Io non penso che questa sia una soluzione elegante, ma, comunque, ci sono due
+possibili modi per procedere:
+
+1. Aggiungendo manualmente la keyword =#+bind= ad ogni file che vuoi
+   esportaré
+   Sarebbe tipo questo:
+   
+   #+begin_src emacs-lisp
+   ,#+bind: denote-directory "/path/to/silo/"
+   #+end_src
+
+2. In alternativa, puoi fare in modo che il frontespizio Org che Denote
+   utilizza per i nuovi file includa automaticamente la parola chiave
+   =#+bind= con il suo valore desiderato. Qui c'é un completo
+   =.dir-locals.el= che (i) definisce il silo e (ii) in accordo modifica il
+   ~denote-org-front-matter~:
+   
+   #+begin_src emacs-lisp
+   ;;; Directory Local Variables.  For more information evaluate:
+   ;;;
+   ;;;     (info "(emacs) Directory Variables")
+
+   ((nil . ((denote-directory . "/path/to/silo/")
+            (denote-org-front-matter .
+             "#+title:      %s
+,#+date:       %s
+,#+filetags:   %s
+,#+identifier: %s
+,#+bind:       denote-directory \"/path/to/silo/\"
+\n"))))
+   #+end_src
+
+   [ Nota che se hai letto il sorgente Org di questo manuale, devi usare il
+   comando ~org-edit-special~ sul codice sopra prima di copiare il
+   codice. Questo perchè Org automaticamente prepende una virgola per
+   rendere chiari questi elementi dalle keyword del file corrente. ]
+
+*** Rendere, ovunque, disponibile ogni comando Denote di un silo
+:PROPERTIES:
+:CUSTOM_ID: h:547e1aac-4b48-403c-8063-ddb74b55e135
+:END:
+
+I silos Denote sono instanziati con un valore di directory locale per la
+~denote-directory~ [[#h:15719799-a5ff-4e9a-9f10-4ca03ef8f6c5][Mantenere
+directory silos separate per le note]]. Questo significa che tutti i
+comandi Denote opereranno sul silo quando l'utente é all'interno di questa
+directory [[#h:e0d60749-194d-4677-b943-5e98fbf9ad1d][Come cambiare
+silo]]. Tuttavia, l'utente potrebbe non volere cambiare silo, e poi chiamare
+un comando Denote, ed infine allontanarsi dal silo: questo cambio di
+contesto può avvenire solo per la durata di un comando.
+
+Qui mostriamo semplicemente come sia facile vincolare transitoriamente il
+valore della ~denote-directory~ al percorso di un silo ( beh, qualsiasi
+percorso, se é per questo).
+
+#+begin_src emacs-lisp
+(defun my-denote-journal-extras-new-or-existing-entry ()
+  "Like `denote-journal-extras-new-or-existing-entry' for my silo."
+  (interactive)
+  (let ((denote-directory "/path/to/silo/"))
+    (call-interactively 'denote-journal-extras-new-or-existing-entry)))
+#+end_src
+
+Tutto quello di cui l'utente ha bisogno per fare ciò é cambiare il comando
+esatto che é passato alla ~call-interactivley~. Per convenienza usiamo un
+esempio dai servizi di journaling che forniamo
+([[#h:4a6d92dd-19eb-4fcc-a7b5-05ce04da3a92][Tenere un'agenda o un
+diario]]).
+
+Con questo, l'utente adesso può chiamare il proprio comando, come
+nell'esempio ~my-denote-journal-extras-new-or-existing-entry~ mostrato sopra,
+quando ne ha bisogno per scrivere una nota senza dover cambiare manualmente
+il silo. Certo, questo comando può essere assgnato ad una combinazione di
+chiavi per magior convenienza. Per esempio:
+
+#+begin_src emacs-lisp
+(define-key global-map (kbd "C-c n j") #'my-denote-journal-extras-new-or-existing-entry)
+#+end_src
+
+**  Escludere alcuni file dal prompt dei file
+:PROPERTIES:
+:CUSTOM_ID: h:53db09de-2cec-4670-b163-5cb791f997b4
+:END:
+
+#+vindex: denote-excluded-files-regexp
+L'opzione utente ~denote-excluded-files-regexp~ é un'espressione regolare che
+trova i nomi di file che dovrebbero essere esclusi da tutti i prompt dei
+file Denote. Questo prompt sono presenti quando colleghi un file con uno
+dei tanti comandi, tipo ~denote-link~
+([[#h:fc913d54-26c8-4c41-be86-999839e8ad31][Collegare le note]]), o quando
+provi ad aprire un file che esiste o meno
+([[#h:ad91ca39-cf10-4e16-b224-fdf78f093883][Apre una nota esistente o la
+crea se non esiste]]).
+
+Funzioni che controllano i file da includere ~denote-directory-files~ e
+~denote-file-prompt~.
+
+La ricerca é eseguita con ~string-match-p~.
+
+[[#h:c916d8c5-540a-409f-b780-6ccbd90e088e][Per sviluppatori o utenti avanzati]].
+
+** Escludere certe directory da tutte le operazioni
+:PROPERTIES:
+:CUSTOM_ID: h:8458f716-f9c2-4888-824b-2bf01cc5850a
+:END:
+
+#+vindex: denote-excluded-directories-regexp
+L'opzione utente ~denote-excluded-directory-regexp~ instruisce ogni funzione
+Denote che legge o controlla i nomi di file/directory di omettere le
+directory che sono trovate con l'espressione regolare data. La regexp
+necessita di trovare solo il nome della directory, non il suo percorso
+completo.
+
+Le operazioni influenzate includono i prompt dei file e le funzioni che
+ritornano il file disponibile nel valore dell'opzione utente
+~denote-directory~ ([[#h:15719799-a5ff-4e9a-9f10-4ca03ef8f6c5][Mantenere
+directory silos separate per le note]]).
+
+Il prompt dei file sono usati da diversi comandi, come ~denote-link~ e
+~denote-subdirectory~.
+
+Le funzioni che controllano i file da includere ~denote-directory-files~ e
+~denote-directory-subdirectories~.
+
+Il ricerca é eseguita con ~string-match-p~.
+
+[[#h:c916d8c5-540a-409f-b780-6ccbd90e088e][Per sviluppatori o utenti
+avanzati]].
+
+** Escludere alcune parole chiave dall'essere dedotte
+:PROPERTIES:
+:CUSTOM_ID: h:69e518ee-ed43-40ab-a5f4-c780a23e5358
+:END:
+
+#+vindex: denote-excluded-keywords-regexp
+L'opzione utenet ~denote-excluded-keywords-regexp~ omette le parole chiave
+,che l'espressione regolare trova, dalla lista dello parole chiave dedotte.
+
+Le keyword sono dedotte dal nome file e fornite al prompt pertinente come
+candidati di completamento quando l'opzione utene ~denote-infer-keywords~ é
+non-nil.
+
+La ricerca é eseguita con ~string-match-p~.
+
+** Usa i comandi Denote dalla barra dei menu o dal menu contestuale
+:PROPERTIES:
+:CUSTOM_ID: h:c4290e15-e97e-4a9b-b8db-6b9738e37e78
+:END:
+
+Denote registra un sotto-menu per la ~menu-bar-mode~. Gli utenti possono
+trovare l'elemento chiamato "Denote". Da qui possono usare il puntatore per
+selezionare un comando. Per un esempio di come questo é mostrato, leggi il
+registro di sviluppo:
+<https://protesilaos.com/codelog/2023-03-31-emacs-denote-menu/>.
+
+#+findex: denote-menu-bar-mode
+Il comando ~denote-menu-bar-mode~ alterna la presentazione del menu. É
+abilitato di default.
+
+Anche Emacs fornisce un supporto per le operazioni attraverso un menu
+contestuale. Questo é tipicamente un insieme di azioni che sono rese
+disponibili dal click del tasto destro del mouse. Gli utenti che abilitano
+~denote-menu-mode~ possono registrare la voce Denote aggiungendo quanto segue
+in fondo al loro file di configurazione:
+
+#+begin_src emacs-lisp
+(add-hook 'context-menu-functions #'denote-context-menu)
+#+end_src
+
+* Rinominare i file
+:PROPERTIES:
+:CUSTOM_ID: h:532e8e2a-9b7d-41c0-8f4b-3c5cbb7d4dca
+:END:
+
+
+* Note alla traduzione
+Ciao, sono [[https://box.canaliluca.wtf][Luca Canali]] e sono appassionato
+di tecnologia, software libero e GNU/Emacs, siccome ritengo questo pezzo di
+software, [[https://protesilaos.com/emacs/denote][denote]], davvero valido
+e ben fatto, voglio che sia disponibile a quante più persone possibili e
+per questo motivo ho deciso di tradurlo in Italiano.
+
+Spero che la traduzione non riporti troppi errori e che
+[[https://protesilaos.com/][Protesilaos Stavrou]] sia contento di tutto
+questo.
+
+Il titolo originale di questo documento é *Denote (denote.el)* che potete
+trovare all'indirizzo https://protesilaos.com/emacs/denote, la mia é una
+traduzione non ufficiale di tale documento.
+
