@@ -607,7 +607,6 @@ questa funzionalità abbia famigliarità con l'operazione ~denote-rename-file~
 (o relativi) e sa che é riutilizzabile
 ([[#h:532e8e2a-9b7d-41c0-8f4b-3c5cbb7d4dca][Rinominare i file]]).
 
-
 *** L'opzione ~denote-date-prompt-use-read-date~
 :PROPERTIES:
 :CUSTOM_ID: h:e7ef08d6-af1b-4ab3-bb00-494a653e6d63
