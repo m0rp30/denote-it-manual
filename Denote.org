@@ -104,7 +104,7 @@ Denote é basato sui seguenti principi fondamentali di progettazione:
   di funzionalità estese é richiesto per l'attività in corso ([[#h:17896c8c-d97a-4faa-abf6-31df99746ca6][Punto d'ingresso]]).
   
 + Portabilità :: Le note sono in testo semplice e dovrebbero rimanere portabili. La
-  modalità in cui Denote scrive i nomi dei file, compreso il frontespizzio
+  modalità in cui Denote scrive i nomi dei file, compreso il frontespizio
   che é incluso nell'intestazione della nota, ed i link che stabilisce
   devono essere tutti adeguatamente utilizzabili con gli strumenti standard
   di Unix. Non necessita di database o altro software specializzato. Man
@@ -1407,6 +1407,561 @@ in fondo al loro file di configurazione:
 :CUSTOM_ID: h:532e8e2a-9b7d-41c0-8f4b-3c5cbb7d4dca
 :END:
 
+Denote fornisce dei comdandi per rinominare i file e aggiornare il loro
+frontespizio in dove opportuno. Per il lavoro di Denote, solo il nome file
+ha bisogno di essere in ordine, per seguire la sua convenzione dei nomi
+([[#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][Schema dei nomi di file]]). Il
+meccanismo di collegamento, in particolare, necessita soltanto
+dell'identificativo nel nome del file
+([[#h:fc913d54-26c8-4c41-be86-999839e8ad31][Collegare le note]]).
+
+Scriviamo il frontespizio nelle note per convenienza dell'utente e per
+altri tools che utilizzano tali strumenti (es. Il meccanismo di
+esportazione di Org).
+Il meccanismo di rinomina si prende cura di mantenere questi dati in
+sincrono con i nomi di file, quando l'utente esegue una modifica.
+
+La rinomina e; utile per mantenere i file preesistenti creati con Denote,
+ma anche per convertire vecchi file di testo in note Denote. Lo schema dei
+nomi di Denote non é specifica per le note o i file di testo: é utile per
+tutti i tipi di oggetti, come file multimediali e PDF che formano parte dei
+salvataggi a lungo termine dell'utente. Sebbene Denote non gestisca tali
+file (es. non crea collegamenti ad essi), ha comunque tutti i meccanismi
+per facilitare le operazione di rinomina di questi ultimi.
+
+#+vindex: denote-after-rename-file-hook
+Tutti i comandi di rinomina avviano ~denote-after-rename-file-hook~ dopo aver
+eseguito un'operazione con successo. Costruisce anche il nome in accordo
+con l'opzione utente ~denote-file-name-components-order~ ~
+([[#h:dc8c40e0-233a-4991-9ad3-2cf5f05ef1cd][Cambiare l'ordine dei
+componenti del nome di file]]).
+
+Oltre a rinomina i file, Denote può anche rinominare solo il buffer. L'idea
+é che il nome file sottostante é corretto ma può essere facilmente usato
+per ordinare i nomi di buffer quando vengono mostrati nella mode line o
+quando si cambia tra loro con un comando tipo ~switch-to-buffer~.
+
+[[#h:3ca4db16-8f26-4d7d-b748-bac48ae32d69][Rinomina automatica dei buffer Denote]].
+
+[[#h:9051f15d-ea7e-4b17-adc2-bc6a749c721b][Trovare identificatori duplicati
+e metterli nel buffer Dired]].
+
+** Rinominare un singolo file
+:PROPERTIES:
+:CUSTOM_ID: h:7cc9e000-806a-48da-945c-711bbc7426b0
+:END:
+
+#+findex: denote-rename-file
+Il comando ~denote-rename-file~ rinomina un file e aggiorna il frontespizio
+esistente se appropriato. É possibile fare la stessa cosa anche con file
+multipli ([[#h:1b6b2c78-42f0-45b8-9ef0-6de21a8b2cde][Rinominate
+interattivamente più file]]).
+
+Rinomina sempre il file nella posizione in cui si trova nel filesystem:
+Non lo sposta mai in un'altra directory.
+
+Se in Dired, considera il =FIL€ come quello al punto, altrimenti ne chiede
+uno chiede traminite il completamento del minibuffer. Quando chiamato da
+Lisp, =FILE= é un percorso del filesystem rappresentato come una stringa.
+
+Se =FILE= ha un identificativo compatibile con Denote, lo mantiene durante
+l'aggiornamento dei componenti del nome file tenendo come riferimento
+l'opzione utente ~denote-prompts~~
+([[#h:f9204f1f-fcee-49b1-8081-16a08a338099][L'opzione
+~denote-prompts~]]). Di default, questi sono il =TITLE= e le =KEYWORDS=. La
+=SIGNATURE= é un'altro. Quando chiamato da Lisp, =TITLE= e =SIGNATURE= sono
+stringhe, invece =KEYWORDS= é una lista di stringhe.
+
+Se non c'é un identificativo, ~denote-rename-file~ crea un identificativo
+base seguendo queste condizioni:
+
+1. Se ~denote-prompts~ include un elemento per la data, allora chiede la =DATE=
+   e prende il suo input per produrre un nuovo identificatore. Per usarlo
+   in Lisp, =DATE= deve essere conforme con ~denote-valid-date-p~.
+   
+2. Se =DATE= é nil ( es. quando ~denote-prompts~ non include un elemento data),
+   usa gli attributi del file per determinare l'ultima data di modifica del
+   =FILE= e lo formatta come identificatore.
+
+3. Come ripiego, usa la data ed orario correnti come identificativo.
+
+4. In ogni caso, se l'identificativo risultante non fosse unico tra i file
+   della variabile ~denote-directory~, lo incrementerà in modo da renderlo
+   unico.
+
+Nell'uso interattivo, e assumento che ~denote-prompts~ includa un elemento
+titolo, ~denote-rename-file~ fa si che il prompt =TITLE= abbia un testo
+precompilato, nel minibuffer, che consista nel titolo di corrente di
+=FILE=. Il titolo corrente viene recuperato dal frontespizio (come il =#+title=
+in Org) o dal nome del file.
+
+Il comando fa lo stesso con il prompt =SIGNATURE=, soggetto a ~denote-prompts~,
+riempiendo il minibuffer con la firma corrente del =FILE=, se presente.
+
+Lo stesso principio vale per il prompt =KEYWORDS=: converte le parolechiave nel nome
+file in una stringa, separata da virgole, e riempie il minibuffer con essa
+( il prompt =KEYWORDS= accetta più di una parolachiave, ognuna separata da
+virgola, altrimenti dal ~crm-separator~).
+
+Per tutti i prompt, ~denote-rename-file~ interpreta un input vuoto come
+un'istruzione di rimozione di questo componente dal nome file. Per esempio,
+se é disponibile un prompt =TITLE= e =FILE= é
+=20240211T093531--some-title__keyword1.org= lo rinomina
+=20240211T093531__keyword1.org=. Se un componente del nome del file é
+presente, ma non c'é un elemento per esso in ~denote-prompts~ lo mantiene
+cosi comé.
+
+[ NOTA: Verificare come nel'interfaccia utente del tuo minibuffer
+sia possibile fornire un input vuoto. L'impostazione di default di Emacs
+accetta contenuti vuoti nel minibuffer così come sono, anche se pacchetti
+popolari com ~vertico~ usa, invece, il primo condidato al completamento
+disponibile. Per ~vertico~, l'utente deve muoversi verso l'alto  per selezionare il
+prompt e premere =RET= con un contenuto vuoto, o usare il comando
+~vertico-exit-input~ con un contenuto vuoto. Il comando Vertico é
+assiciato a =M-RET= al momento in cui scriviamo 2024-02-13 08:08 +0200. ]
+
+Quando rinomini =FILE=, il comando legge l'estensione del file (come =.org=) e
+lo preserva per l'intero processo. I file che non hanno estensione sono
+lasciati senza di essa.
+
+Come step finale, chiede la conferma, mostrando le differenze tra il
+vecchio ed il nuovo nome file. Non chiede la conferma se l'opzione utente
+~denote-rename-confirmations~ non contiene il simbolo ~modifi-file-name~~
+([[#h:a2ae9090-c49e-4b32-bcf5-eb8944241fd7][L'opzione
+~denote-rename-confirmations~]]).
+
+Se =FILE= ha un frontespizio per =TITLE= e =KEYWORDS=, chiede se sovrascrivere i
+loro valori in modo da riflettere il nuovo input, a meno che
+~denote-rename-confirmations~ non manchi ~rewrite-front-matter~. Quando
+~denote-save-buffers~ é nil (il predenfinito), non salvano il buffer
+sottostante, dando così all'utente la possibilità di ricontrollare il
+risultato, come quando si invoca il comando ~diff-buffeer-with-file~. La
+sovrascrittura di =TITLE= e =KEYWORDS= nel frontespizio non apporta modifiche
+al resto del frontespizio.
+
+Se il file non ha il frontespizio ma é tra il tipo di file supportato (per
+~denote-file-type~), aggiunge il frontespizio in cima ad esso e lascia il
+buffer non salvato per future ispezioni
+([[#h:13218826-56a5-482a-9b91-5b6de4f14261][Frontespizio]]). Salva il
+buffer se ~denote-save-buffer~ é non-nil
+([[#h:bf80f4cd-6f56-4f7c-a991-8573161e4511][L'opzione
+~denote-save-buffers~]]).
+
+Costruisce il nome del file in accordo con l'opzione utente
+~denote-file-name-components-order~
+([[#h:dc8c40e0-233a-4991-9ad3-2cf5f05ef1cd][Cambiare l'ordine dei
+componenti del nome file]]).
+
+Avvia ~denote-after-rename-file-hook~ dopo aver rinominato =FILE=.
+
+Questo comando é destinato a (i) rinominare i file Denote, (ii) convertire
+i tipi di file supportati in note Denote, e (ii) rinominare i file non note
+(es. =PDF=) che possono avere benefici dallo schema di nomi di Denote.
+
+*** L'opzione ~denote-rename-confirmations~
+:PROPERTIES:
+:CUSTOM_ID: h:a2ae9090-c49e-4b32-bcf5-eb8944241fd7
+:END:
+
+#+vindex: denote-rename-confirmations
+L'opzione utente ~denote-rename-comfirmations~ controlla quale tipo di
+conferma é richiesta per il comando di rinomina
+[[#h:532e8e2a-9b7d-41c0-8f4b-3c5cbb7d4dca][Rinominare i file]]. Il suo
+valore é una lista di simboli.
+
+Il valore é o nil, in questo caso non é richiesta nessuna conferma, o una
+lista di simboli tra i seguenti:
+
+- ~modify-file-name~ significa che il comando di rinomina chiederà la
+  conferma prima di modificare il nome del file.
+  
+- ~rewrite-front-matter~ significa che il comando di rinomina chiederà la
+  conferam prima di sovrascrivere il frontespizio.
+
+- ~add-front-matter~ significa che il comando di rinomina chiederà la
+  conferma prima di aggiungere un nuovo frontespizio al file.
+
+Il comportamento di default del comando ~denote-rename-file~ (e altri simili)
+é di chiedere una risposta affermativa come step finale prima di cambiare
+il nome di file e, se rilevante, inserire o aggiornare il corrispondente
+frontespizio.
+
+Comandi specializzati che costruiscono sopra a ~denote-rename-file~ (o
+relazionati) può legare internamente l'opzione utente a un valore non-nil
+per eseguire le loro operazioni (es. ~denote-dired-rename-files~ va
+attraverso ogni file Dired marcato, richiedendo informazioni da utilizzare,
+ma esegue la rinominazione senza chiedere conferma
+([[#h:1b6b2c78-42f0-45b8-9ef0-6de21a8b2cde][Rinominare interattivamente più file]])).
+
+** Rinominare un file singolo in base al suo frontespizio
+:PROPERTIES:
+:CUSTOM_ID: h:3ab08ff4-81fa-4d24-99cb-79f97c13a373
+:END:
+
+#+findex: denote-rename-file-using-front-matter
+Nella sezione precedente, abbiamo comperto il meccanismo più generale del
+comando ~denote-rename-file~
+[[#h:7cc9e000-806a-48da-945c-711bbc7426b0][Rinominare un singolo
+file]]. C'é anche un'altro modi di avere lo stesso tipo di risultato
+facendo leggere a Denote la data nel frontespizio del file corrente e
+usarla per costruire/aggiungere il nome file. Il comando per fare questo é
+~denote-rename-file-using-front-matter~.
+É rilevante solo per i file che (i) sono tra i tipi di file supportati, per
+~denote-file-type~, e (ii) hanno il necessario nel frontespizio.
+
+Supponiamo di avere un file =.org= con questo frontespizio
+([[#h:13218826-56a5-482a-9b91-5b6de4f14261][Frontespizio]]):
+
+#+begin_example
+#+title:      My sample note file
+#+date:       [2022-08-05 Fri 13:10]
+#+filetags:   :testing:
+#+identifier: 20220805T131044
+#+end_example
+
+Il suo nome file riflette queste informazioni:
+
+: 20220805T131044--my-sample-note-file__testing.org
+
+Vuoi cambiare il suo titolo e parole chiave manualmente, lo devi modificare
+in questo modo:
+
+#+begin_example
+#+title:      My modified sample note file
+#+date:       [2022-08-05 Fri 13:10]
+#+filetags:   :testing:denote:emacs:
+#+identifier: 20220805T131044
+#+end_example
+
+A questo punto, il nome del file mostrera il vecchio titolo e parole
+chiave.
+Adesso invoca ~denote-rename-file-using-front-matter~ e lui aggiornerà il
+nome file a:
+
+: 20220805T131044--my-modified-sample-note-file__testing_denote_emacs.org
+
+Di default, la rinomina é soggetta ad una richiesta di "yes or no" che
+mostra il vecchio ed il nuovo nome, in modo che l'utente sia certo della
+modifica.
+Anche se questo può essere moficato
+([[#h:a2ae9090-c49e-4b32-bcf5-eb8944241fd7][L'opzione
+~denote-rename-confirmations~]]).
+
+L'identificativo del file, se presente, non viene mai modificato anche se
+modificato nel frontespizio: Denote, in questo caso, considera il nome file come la fonte
+della verità, per evitare potenziali rotture con errori di battitura e
+simili.
+
+Questo comando costruisce il nome file in accordo con l'opzione utente
+~denote-file-name-component-order~
+([[#h:dc8c40e0-233a-4991-9ad3-2cf5f05ef1cd][Cambiare l'ordine dei
+componenti del nome dei file]]).
+
+** Rinominare interattivamente più file
+:PROPERTIES:
+:CUSTOM_ID: h:1b6b2c78-42f0-45b8-9ef0-6de21a8b2cde
+:END:
+
+#+findex: denote-dired-rename-files
+#+findex: denote-dired-rename-marked-files
+Il comando ~denote-dired-rename-files~ (alias
+~denote-fired-rename-marked-files~) rinomina i file che sono segnati in un
+buffer Dired. Il suo comportamento é simile a ~denote-rename-file~ in questo
+richiede per un titolo, parola chiave e firma
+[[#h:7cc9e000-806a-48da-945c-711bbc7426b0][Rinominare un singolo
+file]]. Passa ogni file segnato, rinominando un file dopo l'altro.
+
+Diversamente da ~denote-rename-file~, il comando ~denote-dired-rename-files~
+non chiede confermare i cambiamenti fatti ai file: li esegue completamente
+(come se il valore del'impostazione ~denote-rename-confirmations~ fosse
+nil). Quest rende facile la rinomina di file multipli senza dover
+confermare ogni passaggio. Per un approccio ancora più diretto, controlla
+il comando ~denote-dired-rename-marker-files-with-keywords~.
+
+- [[#h:f365ff7e-2140-4e14-a92f-666ae97382a4][Rinomina scrivendo solo le
+  parole chiave]]
+- [[#h:ea5673cd-e6ca-4c42-a066-07dc6c9d57f8][Rinomina più file in base al
+  loro frontespizio]]
+  
+** Rinominare più file in una volta sola chiedendo solo le parole chiave
+:PROPERTIES:
+:CUSTOM_ID: h:f365ff7e-2140-4e14-a92f-666ae97382a4
+:END:
+
+#+findex: denote-dired-rename-marked-files-with-keywords
+Il comando ~denote-dired-rename-marked-files-with-keywords~ rinomina i file
+segnati in Dired in conformità con il nostro schema di nomi file. Lo fa
+scrivendoci parole chiave. Nello specifico, fa quanto segue:
+
+- conserva il nome file esistente e lo usa come elemento =TILE=, secondo lo
+  chema di denominazione dei file di Denote;
+  
+- rallenta il =TITLE= e aggiunsta lo stile del carattere, in accordo con le
+  nostre convenzioni;
+
+- precede con un identificativo il =TITLE=, se mancante;
+
+- preserva l'estensione del file, se presente;
+
+- richiede, una volta, le =KEYWORDS= e applica l'input dell'utente nel campo
+  corrispondente del nome di file, riscrivendo ogni parola chiave
+  eventualmente esistente e rimuovendo quelle esistenti se =KEYWORDS= é vuoto;
+
+- aggiunge o riscrive il frontespizio esistente del file sottostante, se é
+  riconosciuta come nota Denote (per l'opzione utente ~denote-file-type~), in
+  modo da includere le nuove parole chiave.
+
+[ Nota che i buffer soggetti non sono salvati, a meno che l'opzione utente
+~denote-rename-no-confirm~ sia non-nil. Gli utenti possono quindi
+controllarli per verificare che il nuovo frontespizio non causi problemi
+(es. con il comando ~diff-buffer-with-file~). Buffer multipli possono essere
+salvati in una sola volta lanciando il comando ~save-some-buffers~ ( leggi la
+sua doc string). ]
+
+Costruisce il nome del file in accordo con l'opzione utente
+~denote-file-name-components-order~
+([[#h:dc8c40e0-233a-4991-9ad3-2cf5f05ef1cd][Cambia l'ordine dei componenti
+del nome file]]).
+
+Avvia ~denote-after-rename-file-hook~ al termine della rinomina del file.
+
+#+findex: denote-dired-rename-marked-files-add-keywords
+#+findex: denote-dired-rename-marked-files-remove-keywords
+Per versioni più specializzate di questo comando che aggiungono o rimuovono
+solo parole chiave, usa rispettivamente ~denote-dired-renam-marked-files-add-keywords~ e ~denote-dired-rename-marked-files-remove-keywords~.
+
+** Rinomina più file in base al loro frontespizio
+:PROPERTIES:
+:CUSTOM_ID: h:ea5673cd-e6ca-4c42-a066-07dc6c9d57f8
+:END:
+
+#+findex: denote-dired-rename-marked-files-using-front-matter
+Come già noto, Denote non può rinominare un file basandosi sulla data del
+suo frontespizio [[#h:3ab08ff4-81fa-4d24-99cb-79f97c13a373][Rinominare un
+file singolo in base al suo frontespizio]]. Il comando
+~denote-dired-rename-marked-files-using-front-matter~ estende questo
+principio a un'operazione di batch che si applica a tutti i file segnati in
+Dired.
+
+I file segnati devo essere considerati come note ai fini di Denote, che
+significa che almeno deve avere un identificativo nel loro nome di file e
+usare un tipo di file supportato, per ~denote-file-type~. I file che non
+incontrano questi criteri sono ignorati, perchè Denote non sa se hanno un
+frontespizio e quale possa essere. Per questi file, é ancora possibile
+rinominarli in modo interattivo
+([[#h:1b6b2c78-42f0-45b8-9ef0-6de21a8b2cde][Rinominare interattivamente più
+file]]).
+
+
+** Rinomina un file cambiando solo il suo tipo
+:PROPERTIES:
+:CUSTOM_ID: h:85b65995-89fd-4978-bba3-7bb6c8d6f945
+:END:
+
+#+findex: denote-change-file-type-and-front-matter
+Il comando ~denote-change-file-type-and-front-matter~ fornisce la comodità
+di convertire una nota in un'altro tipo di file, diciamo, =.txt= in tipo
+=.org=. Ti presenta una scelta tra le opzioni ~denote-type~.
+
+La conversione non modifica il frontespizio esistente. Invece, mette in
+cima al file il nuovo frontespizio. Questa é una precauzione di sicurezza,
+poiché, in linea di principio, l'utente può aggiungere al frontespizio
+degli extra che non vorremmo toccare.
+
+Se in Dired, ~denote-change-file-type-and-front-matter~ opera sul file al
+punto, altrimenti con il file corrente, altrimenti ne richiede uno con il
+completamento del minibuffer.
+
+Il titolo del file é recoperato da una line che inizia con un elemento
+titolo nel frontespizio del file, dipende dal tipo di file precedente
+(es. per Org =#+title=). Lo stesso processo é applicato alle parole chiave.
+
+Come step finale, il comando chiede la conferma, mostrando le differenze
+tra in vecchio ed il nuovo file.
+
+Questo comando costruisce il nome del fie in accordo con l'opzione utente
+~denote-file-name-components-order~
+([[#h:dc8c40e0-233a-4991-9ad3-2cf5f05ef1cd][Cambia l'ordine dei componenti
+del nome file]]).
+
+** Rinomina un file interattivamente aggiungendo o rimuovendo un titolo
+:PROPERTIES:
+:CUSTOM_ID: h:a26e28c7-8222-4377-92e9-3b0a709010a5
+:END:
+
+#+findex: denote-rename-file-title
+Il comando ~denote-rename-file-title~ razionalizza il processo interattivo
+aggiungendo o rimuovendo un titolo ad/da un file, cambiando di conseguenza
+il nome del file. Chiede per un titolo usando il famigliare prompt
+minibuffer [[#h:6a92a8b5-d766-42cc-8e5b-8dc255466a23][Creazione note
+standard]]. Poi rinomina il file. Il comando rispetta i valori di
+~denote-rename-comfirmations~ e ~denote-save-buffers~:
+
+- [[#h:a2ae9090-c49e-4b32-bcf5-eb8944241fd7][L'opzione ~denote-rename-confirmations~]].
+- [[#h:bf80f4cd-6f56-4f7c-a991-8573161e4511][L'opzione ~denote-save-buffers~]].
+
+Tecnicamente, ~denote-rename-file-title~ é un involucro per
+~denote-rename-file~, facendo tutte le cose che fa
+([[#h:7cc9e000-806a-48da-945c-711bbc7426b0][Rinominare un singolo file]]).
+
+In concreto, questo comando può aggiungere o rimuovere un titolo in un
+colpo solo. Lo fa prepopolando il prompt del minibuffer con il titolo
+esistente. Gli utenti possono modificarlo. Un input vuoto significa la
+rimozione di tutto il titolo
+([[#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][Schema dei nomi di file]]).
+
+[ NOTA: Verificare come nel'interfaccia utente del tuo minibuffer
+sia possibile fornire un input vuoto. L'impostazione di default di Emacs
+accetta contenuti vuoti nel minibuffer così come sono, anche se pacchetti
+popolari com ~vertico~ usa, invece, il primo condidato al completamento
+disponibile. Per ~vertico~, l'utente deve muoversi verso l'alto  per selezionare il
+prompt e premere =RET= con un contenuto vuoto, o usare il comando
+~vertico-exit-input~ con un contenuto vuoto. Il comando Vertico é
+assiciato a =M-RET= al momento in cui scriviamo 2024-06-30 10:37 +0300. ]
+
+** Rinomina un file interattivamente aggiungendo o rimuovento le keyword
+:PROPERTIES:
+:CUSTOM_ID: h:ad4dde4a-8e88-470a-97ae-e7b9d4b41fb4
+:END:
+
+#+findex: denote-rename-file-keywords
+Il comando ~denote-rename-file-keywords~ razionalizzando il processo
+interattivo di aggiunta o rimozione delle parole chiave da un file,
+cambiando, in accordo, il suo nome file ed il frontespizio. Richiede le
+parole chiave con il famigliare prompt minibuffer
+([[#h:6a92a8b5-d766-42cc-8e5b-8dc255466a23][Creazione note
+standard]]). Quindi rinomina il file
+([[#h:3ab08ff4-81fa-4d24-99cb-79f97c13a373][Rinominare un file singolo in
+base al suo frontespizio]]).
+Il comando rispetta i valori di ~denote-rename-confirmations~ e
+~denote-save-buffers~:
+
+- [[#h:a2ae9090-c49e-4b32-bcf5-eb8944241fd7][L'opzione ~denote-rename-confirmations~]].
+- [[#h:bf80f4cd-6f56-4f7c-a991-8573161e4511][L'opzione
+  ~denote-save-buffers~]].
+
+Tecnicamente, ~denote-rename-file-keywords~ é un involucro per
+~denote-rename-file~, facendo tutte le cose che fa
+([[#h:7cc9e000-806a-48da-945c-711bbc7426b0][Rinominare un singolo file]]).
+
+In concreto, questo comando aggiunge o rimuove le parole chiave in un colpo
+solo. Lo fa prepopolando il prompt del minibuffer con le parole chiave
+esistenti. Gli utenti possono farlo usando il ~crm-separator~ (normalmente la
+virgola), per scrivere le nuove parole chiave o modificare qulle nel prompt
+e riscriverele in accordo. Un input vuoto significa la rimozione di tutte
+le parole chiave ([[#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][Schema dei
+nomi di file]]).
+
+[ NOTA: Verificare come nel'interfaccia utente del tuo minibuffer
+sia possibile fornire un input vuoto. L'impostazione di default di Emacs
+accetta contenuti vuoti nel minibuffer così come sono, anche se pacchetti
+popolari com ~vertico~ usa, invece, il primo condidato al completamento
+disponibile. Per ~vertico~, l'utente deve muoversi verso l'alto  per selezionare il
+prompt e premere =RET= con un contenuto vuoto, o usare il comando
+~vertico-exit-input~ con un contenuto vuoto. Il comando Vertico é
+assiciato a =M-RET= al momento in cui scriviamo 2024-06-30 10:37 +0300. ]
+
+** Rinomina un file interattivamente aggiungendo o rimuovendo una firma
+:PROPERTIES:
+:CUSTOM_ID: h:b08a350f-b269-47ed-8c2a-b8ecf1b63c7f
+:END:
+
+#+findex: denote-rename-file-signature
+Il comando ~denote-rename-file-signature~ razionalizza il processo
+interattivo di aggiunta o rimozione di una firma ad/da un file, cambiando,
+in accordo, il suo nome file. Richiede per una firma usando il famigliare
+prompt minibuffer ([[#h:6a92a8b5-d766-42cc-8e5b-8dc255466a23][Creazione
+note standard]]). Quindi rinomina il file. Il comando rispetta i valori di
+~denote-rename-confirmations~ e ~denote-save-buffers~:
+
+- [[#h:a2ae9090-c49e-4b32-bcf5-eb8944241fd7][L'opzione ~denote-rename-confirmations~]].
+- [[#h:bf80f4cd-6f56-4f7c-a991-8573161e4511][L'opzione
+  ~denote-save-buffers~]].
+
+Tecnicamente, ~denote-rename-file-signature~ é un involucro per
+~denote-rename-file~, facendo tutte le cose che fa ([[#h:3ab08ff4-81fa-4d24-99cb-79f97c13a373][Rinominare un file singolo in
+base al suo frontespizio]]).
+
+In concreto, questo comando può aggiungere o rimuovere una firma in un
+colpo solo. Lo fa prepopolando il prompt del minibuffer con le firme
+esistenti. Gli utenti possono poi modificarli. Un input vuoto significa la
+rimozione di tutte le firme
+([[#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][Schema dei nomi di file]]).
+
+[ NOTA: Verificare come nel'interfaccia utente del tuo minibuffer
+sia possibile fornire un input vuoto. L'impostazione di default di Emacs
+accetta contenuti vuoti nel minibuffer così come sono, anche se pacchetti
+popolari com ~vertico~ usa, invece, il primo condidato al completamento
+disponibile. Per ~vertico~, l'utente deve muoversi verso l'alto  per selezionare il
+prompt e premere =RET= con un contenuto vuoto, o usare il comando
+~vertico-exit-input~ con un contenuto vuoto. Il comando Vertico é
+assiciato a =M-RET= al momento in cui scriviamo 2024-06-30 10:37 +0300. ]
+
+** Trova gli identificativi duplicati e li mette in un buffer dired
+:PROPERTIES:
+:CUSTOM_ID: h:9051f15d-ea7e-4b17-adc2-bc6a749c721b
+:END:
+
+Denote si prende cura di creare identificativi unici, anche se il suo
+meccanismo si basa sulla lettura degli indentificativi esistenti nella
+~denote-directory~ o nella directory corrente. Quando rinominiamo i file
+attraverso differenti directory, c'é una piccola probabilità che alcuni
+file abbiano gli stessi attributi e quindi sono stati assegnati
+identificativi identici. Se questi file dovessero mai essere inseriti un
+una consolidata ~denote-directory~, potremmo avere dei duplicati, che
+romperebbero il meccanismo di collegamento.
+
+Questo é un caso limite, nel codice base di Denote non includiamo alcun
+codice per affrontarlo. Comunque, ecco un modo per trovare gli
+identificatori duplicati all'interno della directory corrente:
+
+#+begin_src emacs-lisp
+(defun my-denote--get-files-in-dir (directory)
+  "Return file names in DIRECTORY."
+  (directory-files directory :full-paths directory-files-no-dot-files-regexp))
+
+(defun my-denote--same-identifier-p (file1 file2)
+  "Return non-nil if FILE1 and FILE2 have the same identifier."
+  (let ((id1 (denote-retrieve-filename-identifier file1))
+        (id2 (denote-retrieve-filename-identifier file2)))
+    (equal id1 id2)))
+
+(defun my-denote-find-duplicate-identifiers (directory)
+  "Find all files in DIRECTORY that need a new identifier."
+  (let* ((ids (my-denote--get-files-in-dir directory))
+         (unique-ids (seq-uniq ids #'my-denote--same-identifier-p)))
+    (seq-difference ids unique-ids #'equal)))
+
+(defun my-denote-dired-show-duplicate-identifiers (directory)
+  "Put duplicate identifiers from DIRECTORY in a dedicated Dired buffer."
+  (interactive
+   (list
+    (read-directory-name "Select DIRECTORY to check for duplicate identifiers: " default-directory)))
+  (if-let ((duplicates (my-denote-find-duplicate-identifiers directory)))
+      (dired (cons (format "Denote duplicate identifiers" directory) duplicates))
+    (message "No duplicates identifiers in `%s'" directory)))
+#+end_src
+
+Valuta questo codice e poi chiama il comando
+~my-denote-dired-show-duplicate-identifiers~. Se ci sono duplicati, li
+metterà in un buffer Dired dedicato. Da qui, puoi vedere il contenuto dei
+file come al solito, e manualmente modificare gli identificatori come credi
+meglio (es. modificali uno per uno, o rendi scrivibile Dired e registra una
+macro che faccia uso di un contatore che incrementa di 1---contattami se
+hai bisogno di aiuto).
+
+** Interfacce utilizzate dai comandi di rinominazione
+:PROPERTIES:
+:CUSTOM_ID: h:ab3f355a-f763-43ae-a4c9-179d2d9265a5
+:END:
+
+Queste sono le interfacce usate dai vari comandi di rinomina di Denote per
+stilizzare o evidenziare il file vecchio/nuovo/corrente mostrato nei
+rispettivi prompt minibuffer:
+
+- ~denote-faces-prompt-current-name~
+- ~denote-faces-prompt-new-name~
+- ~denote-faces-prompt-old-name~
 
 * Note alla traduzione
 Ciao, sono [[https://box.canaliluca.wtf][Luca Canali]] e sono appassionato
