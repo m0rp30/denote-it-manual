@@ -870,7 +870,7 @@ comando é sempre usato per catturare le citazioni da altri sorgenti. In
 questo esempio, consideriamo "gli altri sorgenti" provenienti da buffer
 Emacs EWW (con ~M-x eww~) o file regolari all'esterno della ~denote-directory~.
 
-[ Questo é un concetto di prova che non copre tutti i casi. Se qualcuno
+[ Questo é un proof-of-concept che non copre tutti i casi. Se qualcuno
 vuole usare una variazione di questo, me lo faccia sapere. ]
 
 #+begin_src emacs-lisp

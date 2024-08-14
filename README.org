@@ -1,0 +1,10 @@
+Siccome ritengo questo pezzo di software, [[https://protesilaos.com/emacs/denote][denote]], davvero valido e ben
+fatto, voglio che sia disponibile a quante più persone possibili e per
+questo motivo ho deciso di tradurlo in Italiano.
+
+Spero che la traduzione non riporti troppi errori e che [[https://protesilaos.com/][Protesilaos Stavrou]]
+sia contento di tutto questo.
+
+Il titolo originale di questo documento é *Denote (denote.el)* che potete
+trovare all'indirizzo https://protesilaos.com/emacs/denote, la mia é una
+traduzione non ufficiale di tale documento.
