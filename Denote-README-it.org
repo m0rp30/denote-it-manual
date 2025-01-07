@@ -1962,6 +1962,231 @@ rispettivi prompt minibuffer:
 - ~denote-faces-prompt-new-name~
 - ~denote-faces-prompt-old-name~
 
+* Lo schema di file-name
+:PROPERTIES:
+:CUSTOM_ID: h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d
+:END:
+
+#+vindex: denote-directory
+Le note sono salvate nella ~denote-directory~. La path di default é
+=~/Documents/notes=. La ~denote-directory~ può essere un elenco piatto, cioé
+senza sottodirectory, o può essere un albero di directory.
+Ad ogni modo, Denote prende in considerazione solo le "note" come candidati
+validi nelle operazioni pertinenti e ometterà gli altri file o directory.
+
+Ogni nota creata tramite Denote segue questo pattern di default
+([[#h:17896c8c-d97a-4faa-abf6-31df99746ca6][Punto d'ingresso]]):
+
+: DATE=SIGNATURE--TITLE__KEYWORDS.EXTENSION
+
+L'elemento =DATE= rappresenta la data nel formato anno-mese-giorno seguita
+dalla lettera maiuscola =T= (per tempo) e l'orario corrente mella notazione
+ore-minuti-secondi. La rappresentazione compatta: =20220531T091625=. La =DATE=
+server come unoco identificativo per ogni nota e, come tale, è anche
+conosciuto come ID del file o identificatore.
+
+I nomi di file possono includere una stringa di caratteri alfanumerici nel
+campo =SIGNATURE=. Le signature non hanno un chiaro scopo e sta all'utente
+definirlo. Un caso d'uso è di usarle per stabilire una relazione
+sequenziale tra i file (es. 1, 1a, 1b, 1b1, 1b2, ...).
+
+Le firme sono un'estensione opzionale dello schema di nomi di
+Denote. Possono essere aggiunte, on demand, ai nuovi file creati, con il
+comando ~denote-signature~, o modificando il valore del'opzione utente
+~denote-prompts~.
+
+Il campo =TITLE= è il titolo della nota, come fornito dall'utente. Viene
+automaticamente reso in minuscolo e separato dal trattino
+([[#h:ae8b19a1-7f67-4258-96b3-370a72c43f4e][Sluggification dei componenti del nome del file]]). Un titolo come
+"Economics in the Euro Area" produce una stringa =economics-in-the-euro-area=
+per il =TITLE= del nome del file.
+
+Il campo =KEYWORDS= consiste in uno o più elementi demarcati da un trattino
+basso (Il separatore è inserito automaticamente). Ogni parola chiave è una
+stringa fornita dall'utente nel relativo prompt che, in linea di massima,
+descrive il contenuto dell'elemento.
+
+Ognuna delle parole chiave è una singola parola, fornendo più parole chiave
+la multi-dimensionalita serve per una ricerca avanzata tra i file
+Denote. Gli utente che necessitano di keyword composte possono usare parole
+come camelCase/CamelCase e sono incoraggiati ad usare l'opzione utente
+~denote-file-name-slug-functions~ ([[#h:ae8b19a1-7f67-4258-96b3-370a72c43f4e][Sluggification
+of file name components]]).
+
+
+#+vindex: denote-file-type
+=EXTENSION= è il tipo di file. Di default, è =.org= (~org-mode~) con l'opzione
+utente ~denote-file-type~ fornisce supporto per Markdown con le varianti YAML
+o TOML (=.md= che avviano ~markdown-mode~) e testo semplice (=.txt= tramite
+~text-mode~). Consula le loro doc string per completezza.
+Mentre i file terminano, di default, con l'estensione =.org=, il codice
+Denote di base non dipende effettivamente da org.el e/o sue
+implementazioni.
+
+Esempio:
+
+: 20220610T043241--initial-thoughts-on-the-zettelkasten-method__notetaking.org
+: 20220610T062201--define-custom-org-hyperlink-type__denote_emacs_package.md
+: 20220610T162327--on-hierarchy-and-taxis__notetaking_philosophy.txt
+
+I diversi separatori di campo, vale a dire =--= e =__= introcude un modo
+efficente per ancorare le ricerche (per esempio con comandi Emacs tipo
+~isearch~ o dalla linea di comando con ~find~ e relativi). Una query per =_word=
+trova sempre una chiave, quindi una regexp nella forma
+="\\([0-9T]+?\\)--\\(.*?\\)_"= cattura la data nel gruppo =\1= e il titolo in
+=\2= (testa ogni espressione regolare nel buffer corrente invocando =m-x
+re-builder=).
+
+[[#h:1a953736-86c2-420b-b566-fb22c97df197][Funzionalità dello schema dei nomi di file per la ricerca o il filtraggio]].
+
+Il ~denote-prompts~ può essere configurato da produrre le seguenti
+permutazioni di nomi di file:
+
+: DATE.EXT
+: DATE--TITLE.EXT
+: DATE__KEYWORDS.EXT
+: DATE==SIGNATURE.EXT
+: DATE==SIGNATURE--TITLE.EXT
+: DATE==SIGNATURE--TITLE__KEYWORDS.EXT
+: DATE==SIGNATURE__KEYWORDS.EXT
+
+Quando in dubbio, attieniti all'impostazione di default, che è considerata
+sicura e funziona bene ([[#h:dc8c40e0-233a-4991-9ad3-2cf5f05ef1cd][Cambiare l'ordine dei componenti del nome del file]]).
+
+Quindi Denote è un pacchetto Emacs, le note dovrebbero funzionare a lungo
+termine e non dipendono dalle funzionalità di uno specifico programma. Lo
+schema dei nomi dei file che applichiamo garantisce che un elenco sia
+leggibile in diversi contesti. Lo schema dei nomi dei file di Denote è,
+nell'essenza, un'effettiva invenzione low-tech.
+
+** Cambiare l'ordine dei componenti del nome del file
+:PROPERTIES:
+:CUSTOM_ID: h:dc8c40e0-233a-4991-9ad3-2cf5f05ef1cd
+:END:
+
+#+vindex: denote-file-name-components-order
+Il nostro schema dei nomi di file standard prescrive uno specifico ordine
+per i componenti dei nomi fi file ([[#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d][Lo schema di file-nam]]). Pensavamo di
+fornire l'opzione utente ~denote-file-name-components-order~ per permettere
+all'utente di riordinarlo come si sentiva più comodo.
+
+Il valore di questa opzione utente è una lista dei seguenti simboli:
+
+- ~identifier~: Questa è una combinazione di date ed orario. Quando questo è
+  il primo della lista, è simile a =20240519T073456= e non ha componenti
+  separatore all'interno a causa del suo formato univoco.
+
+- ~signature~: Questa è una stringa arbitrariache può essere usata per
+  qualificare il file in diversi modi, in accordo con la metodologia
+  del'utente (es. per aggiungere una sequenza di note). La stringa è sempre
+  preceduta da ~==~ per rimanere univoca.
+
+- ~title~: Questa è una stringa arbitraria che descrive il file. É sempre
+  preceduta da =--= per essere univoca.
+
+- ~keywords~: Questa è una serie di una o più parole che raggruppano in modo
+  succinto i file. Diverse keyword sono separate da un underscore che
+  precede ogniuno di loro. Il componente del nome del file è sempre
+  preceduta con =__=.
+
+Tutte e quattro i simboli devono apparire esattamente una volta. I
+duplicati sono ignorati. Ogni simbolo omesso è aggiunto automaticamente.
+
+Alcuni esempi:
+
+#+begin_src emacs-lisp
+(setq denote-file-name-components-order '(identifier signature title keywords))
+;; => 20240519T07345==hello--this-is-the-title__denote_testing.org
+
+(setq denote-file-name-components-order '(signature identifier title keywords))
+;; => ==hello@@20240519T07345--this-is-the-title__denote_testing.org
+
+(setq denote-file-name-components-order '(title signature identifier keywords))
+;; => --this-is-the-title==hello@@20240519T07345__denote_testing.org
+
+(setq denote-file-name-components-order '(keywords title signature identifier))
+;; => __denote_testing--this-is-the-title==hello@@20240519T07345.org
+#+end_src
+
+Vedere anche come configurare i prompt Denote, che influenzano quali
+componenti vengono effettivamente utilizzati nell'ordine specificato in
+questo documento ([[#h:f9204f1f-fcee-49b1-8081-16a08a338099][L'opzione ~denote-prompts~]]).
+
+Prima di decidere su questo, perfavore considera le implicazioni a lungo
+termine dei nomi dei file con i vari pattern. La consistenza rende le cose
+prevedibili e quind più facili da trovare. Quindi scegli un ordine e non
+toccarlo mai più. In caso di dubbi lascia lo schema dei nomi così com'è. 
+
+** Sluggification dei componenti del nome del file
+:PROPERTIES:
+:CUSTOM_ID: h:ae8b19a1-7f67-4258-96b3-370a72c43f4e
+:END:
+
+I nomi di file possono contengono tutti i caratteri che un filesysteme
+permette. Denote impone un certo numero di restrizoini aggiuntive.
+
++ Il simbolo "===", =__= e =--= sono interpretati da Denote dovrebbero apparire
+  solo una volta.
+
++ Il carattere punto non è permesso nel nome file delle note, fatta
+  eccezione per indicare il tipo di estensione del file. Denote riconosce
+  due estensioni per i file cryptati, come =.txt.gpg=.
+
+Di default, Denote applica altre regole ai nomi dei file attraverso l'opzione
+utente ~denote-file-name-slug-funtions~. Queste regole vengono applicate di
+default ai nomi dei file:
+
++ Quando c'é un "carattere inlegale" viene rimosso. La costante
+  ~denote-excluded-punctuation-regexp~ contiene i valori relevanti.
+  
++ L'input per il titolo é sillabato. Il valore originale viene conservato
+  nel contenudo della nota ([[#h:13218826-56a5-482a-9b91-5b6de4f14261][Frontespizio]]).
+
++ Gli spazzi o altri delimitatori vengono eliminati dalle parole chiave,
+  quindi questo =hello-world= diventa =helloworld=. Questo perché i trattini
+  nelle parole chiave non funzionano ovunque, come in Org. In oltre, i
+  trattini, sono i sepratori di parole nel titolo e vogliamo mantenere
+  separatori distinti per ogni componente per rendere la ricerca facile e
+  semantica ([[#h:1a953736-86c2-420b-b566-fb22c97df197][Funzionalità dello schema dei nomi per la ricerca od il filtraggio]]).
+
++ Le firme sono come sopra, ma usano lo stesso segno al posto del trattino
+  come separatore di parole.
+
++ Tutti i componenti del nome del file sono in minuscolo. Più sotto
+  descriviamo come modificare questa regola, come accettare l'input nalla
+  forma verbatim =helloWorld= o =HelloWorld=.
+  
+Denote impone queste restrizioni per garantire l'uniformità, che nel lungo
+termine si rivela utile in quanto mantiene tutti i file con lo stesso
+prevedibile modello. Troppe modifice rendono la ricerca più difficile da
+esprimere in modo accurato ed avere la certezza che le corrispondenze
+coprano tutti i file. Tuttavia, uno dei principi di Denote é la sua
+flessibilità o possibilità di haccheraggio e quindi gli utenti possono
+discostarsi da quanto sopra
+([[#h:d375c6d2-92c7-425f-9d9d-219ff47ed2a3][Sluggification definita dall'utente per i componenti del nome del file]]).
+
+** Sluggification definita dall'utente per i componenti del nome del file
+:PROPERTIES:
+:CUSTOM_ID: h:d375c6d2-92c7-425f-9d9d-219ff47ed2a3
+:END:
+
+#+vindex: denote-file-name-slug-functions
+L'opzione utente ~denote-file-name-slug-functions~ controlla la
+sluggification dei componenti del nome del file ([[#h:ae8b19a1-7f67-4258-96b3-370a72c43f4e][Sluggification dei
+componenti del nome del file]]).
+Il metodo di default é 
+  
+** Funzionalità dello schema dei nomi per la ricerca od il filtraggio
+:PROPERTIES:
+:CUSTOM_ID: h:1a953736-86c2-420b-b566-fb22c97df197
+:END:
+
+* Frontespizio
+:PROPERTIES:
+:CUSTOM_ID: h:13218826-56a5-482a-9b91-5b6de4f14261
+:END:
+
+
 * Note alla traduzione
 Ciao, sono [[https://box.canaliluca.wtf][Luca Canali]] e sono appassionato
 di tecnologia, software libero e GNU/Emacs, siccome ritengo questo pezzo di
